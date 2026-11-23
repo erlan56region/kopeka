@@ -15,13 +15,22 @@
   };
 
   const $ = (sel, root) => (root || document).querySelector(sel);
+
+  // База пути: '' на сервере, '/kopeka' на GitHub Pages (window.__BASE_PATH__)
+  const BASE = String(window.__BASE_PATH__ || '').replace(/\/+$/, '');
+  function appPath() {
+    let p = location.pathname || '/';
+    if (BASE && (p === BASE || p.startsWith(BASE + '/'))) p = p.slice(BASE.length) || '/';
+    return p || '/';
+  }
+  function toHref(path) { return BASE + (path === '/' ? '/' : path); }
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
   /* ---------------- навигация ---------------- */
 
   function navigate(path, opts) {
-    if (opts && opts.replace) history.replaceState({}, '', path);
-    else history.pushState({}, '', path);
+    if (opts && opts.replace) history.replaceState({}, '', toHref(path));
+    else history.pushState({}, '', toHref(path));
     render();
   }
 
@@ -113,12 +122,12 @@
       es = new EventSource('/api/events');
       es.addEventListener('message', () => {
         bumpUnread();
-        if (!location.pathname.startsWith('/chats')) return;
+        if (!appPath().startsWith('/chats')) return;
         const draft = document.querySelector('#chat-form textarea');
         if (draft && draft.value.trim()) { toast('Новое сообщение в чате'); return; }
         render(true);
       });
-      es.addEventListener('deal', () => { if (location.pathname.startsWith('/chats') || location.pathname === '/deals') render(true); });
+      es.addEventListener('deal', () => { const p = appPath(); if (p.startsWith('/chats') || p === '/deals') render(true); });
       es.onerror = () => { /* браузер сам переподключится */ };
     } catch (e) { /* окружение без SSE */ }
   }
@@ -141,9 +150,8 @@
   /* ---------------- рендер ---------------- */
 
   async function render(silent) {
-    const url = new URL(location.href);
-    const path = url.pathname;
-    const params = url.searchParams;
+    const path = appPath();
+    const params = new URLSearchParams(location.search);
 
     try {
       await loadMe();
@@ -196,20 +204,20 @@
   function bindHome() {
     const sort = $('#sort-select');
     if (sort) sort.onchange = () => {
-      const u = new URL(location.href);
-      u.searchParams.set('sort', sort.value);
-      navigate(u.pathname + u.search);
+      const u = new URLSearchParams(location.search);
+      u.set('sort', sort.value);
+      navigate('/?' + u.toString());
     };
     const form = $('#filter-form');
     if (form) form.onsubmit = (e) => {
       e.preventDefault();
       const fd = new FormData(form);
-      const u = new URL(location.href);
+      const u = new URLSearchParams(location.search);
       ['city', 'min', 'max', 'deal'].forEach((k) => {
         const v = (fd.get(k) || '').toString().trim();
-        if (v) u.searchParams.set(k, v); else u.searchParams.delete(k);
+        if (v) u.set(k, v); else u.delete(k);
       });
-      navigate(u.pathname + u.search);
+      navigate('/?' + u.toString());
     };
     const more = $('#more-btn');
     if (more) more.onclick = async () => {

@@ -140,6 +140,11 @@
     const cover = ad.photos && ad.photos[0];
     const owner = ad.owner || {};
     const isMine = ad.isMine;
+    const statusPill = ad.status === 'active'
+      ? '<span class="pill green">Активно</span>'
+      : ad.status === 'sold'
+        ? '<span class="pill gold">Продано</span>'
+        : '<span class="pill red">Снято с публикации</span>';
     return `
     <div class="container">
       <div class="muted small" style="margin-bottom:14px">
@@ -154,7 +159,7 @@
 
           <div class="ad-details">
             <div class="chips" style="margin-bottom:10px">
-              <span class="pill ${ad.status === 'active' ? 'green' : 'gold'}">${ad.status === 'active' ? 'Активно' : ad.status === 'sold' ? 'Продано' : 'В архиве'}</span>
+              ${statusPill}
               <span class="pill">${icons.eye} ${ad.views} просмотров</span>
               <span class="pill">${esc(timeAgo(ad.createdAt))}</span>
             </div>

@@ -502,7 +502,7 @@ async function api(req, res, pathname, query) {
       deal.updatedAt = Date.now();
       if (next === 'done') {
         const ad = db().ads.find(x => x.id === deal.adId);
-        if (ad && ad.ownerId === deal.toId) { ad.status = 'sold'; ad.updatedAt = Date.now(); }
+        if (ad && (ad.ownerId === deal.fromId || ad.ownerId === deal.toId)) { ad.status = 'sold'; ad.updatedAt = Date.now(); }
       }
       const chat = db().chats.find(c => c.id === deal.chatId);
       if (chat) {
