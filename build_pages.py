@@ -654,6 +654,12 @@ window.__KOPEIKINO_DEMO__ = {demo};
     # Pages отдаёт 404.html на неизвестные пути — это спасает прямые ссылки /ad/<id>
     (ROOT / '404.html').write_text(body, encoding='utf-8')
 
+    # Копии для «красивых» адресов: Pages отдаёт /kopeka/chats, если файл chats.html существует,
+    # иначе сначала отдаёт 404.html — часть браузеров/встраивателей его не исполняет.
+    for route in ('chats', 'deals', 'favorites', 'auth', 'new', 'my', 'me', 'ad', 'user', 'edit'):
+        (ROOT / (route + '.html')).write_text(body, encoding='utf-8')
+        (OUT_DIR / (route + '.html')).write_text(body, encoding='utf-8')
+
     # 404.html: при клиентской навигации не нужен, но спасает прямые ссылки вида /ad/xxx
     depth = body.count('/')
     fallback = body.replace('</head>', '<script>window.__DEEP_LINK__ = true;</script></head>')
