@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#ffffff"/>
+<title>Копейкино — Вариант 1 (красная тема)</title>
+<!-- Вариант 1: красная тема, сохранён по запросу пользователя -->
+<meta name="description" content="Копейкино — бесплатная доска объявлений России. Покупайте и продавайте товары, недвижимость, автомобили, находите работу и услуги."/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff; --bg2:#f4f4f5; --card:#ffffff; --text:#09090b; --muted:#71717a;
+  --border:#e4e4e7; --primary:#dc2626; --primary-h:#b91c1c; --primary-soft:rgba(220,38,38,.12);
+  --gold:#f59e0b; --red:#e11d48; --ring:rgba(220,38,38,.35);
+  --shadow:0 8px 30px rgba(0,0,0,.08); --radius:16px;
+  --header-h:76px;
+}
+html[data-theme="dark"]{
+  --bg:#09090b; --bg2:#18181b; --card:#111113; --text:#fafafa; --muted:#a1a1aa;
+  --border:#27272a; --primary:#ef4444; --primary-h:#dc2626; --primary-soft:rgba(239,68,68,.14);
+  --shadow:0 8px 30px rgba(0,0,0,.5);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.container{max-width:1200px;margin:0 auto;padding:0 16px}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--text)}
+::-webkit-scrollbar{height:8px;width:10px}
+::-webkit-scrollbar-thumb{background:#c4c4c7;border-radius:8px}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#3f3f46}
+.no-bar{scrollbar-width:none;-ms-overflow-style:none}
+.no-bar::-webkit-scrollbar{display:none}
+
+/* ===== Header ===== */
+header.site{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.header-in{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:var(--header-h);padding-top:10px;padding-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.02em;white-space:nowrap}
+.coin{width:48px;height:48px;border-radius:50%;background:conic-gradient(from 210deg,#fca5a5,#dc2626,#fecaca,#dc2626,#fca5a5);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px;color:#7f1d1d;box-shadow:inset 0 0 0 3px rgba(127,29,29,.25),0 4px 12px rgba(220,38,38,.35);flex-shrink:0}
+.loc-btn{display:flex;align-items:center;gap:6px;font-size:14px;padding:8px 12px;border-radius:10px;border:1px solid transparent}
+.loc-btn:hover{color:var(--red);background:var(--bg2)}
+.header-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid transparent}
+.icon-btn:hover{background:var(--bg2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:14px;padding:10px 16px;border:1px solid var(--border);background:var(--card);transition:.15s;white-space:nowrap}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-dark{background:#18181b;border-color:#18181b;color:#fff}
+html[data-theme="dark"] .btn-dark{background:#fafafa;border-color:#fafafa;color:#09090b}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn-block{width:100%}
+.fav-count{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rel{position:relative}
+.only-desktop{display:none}
+.only-mobile{display:inline-flex}
+@media(min-width:1024px){.only-desktop{display:inline-flex}.only-mobile{display:none!important}.brand{font-size:24px}.coin{width:56px;height:56px;font-size:30px}}
+
+/* drawer */
+.drawer{position:fixed;inset:0;z-index:80;display:none}
+.drawer.open{display:block}
+.drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.drawer-panel{position:absolute;top:0;right:0;bottom:0;width:min(320px,88vw);background:var(--bg);border-left:1px solid var(--border);padding:20px;overflow:auto}
+.drawer-panel a,.drawer-panel button.row{display:flex;width:100%;align-items:center;gap:10px;padding:12px 10px;border-radius:10px;font-weight:600;text-align:left}
+.drawer-panel a:hover,.drawer-panel button.row:hover{background:var(--bg2)}
+
+/* ===== Stories ===== */
+.stories{display:flex;gap:12px;overflow-x:auto;padding:16px 2px 6px;cursor:grab}
+.story{width:82px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.story-ring{width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(from 30deg,#f59e0b,#e11d48,#8b5cf6,#f59e0b)}
+.story-ring.seen{background:var(--border)}
+.story-in{width:100%;height:100%;border-radius:50%;background:var(--bg);padding:3px}
+.story-ava{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg2)}
+.story-add .story-ring{background:var(--primary-soft)}
+.story-add .story-ava{background:transparent;color:var(--primary);font-size:30px;font-weight:300}
+.story-name{font-size:11px;color:var(--muted);max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ===== Search row ===== */
+.search-row{display:flex;gap:8px;margin:14px 0 18px;flex-wrap:wrap}
+.cat-wrap{position:relative}
+.cat-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:50;width:min(560px,90vw);background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:10px;display:none;max-height:60vh;overflow:auto}
+.cat-menu.open{display:block}
+.cat-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;font-size:14px;text-align:left}
+.cat-menu button:hover{background:var(--bg2)}
+.cat-menu button.active{background:var(--primary-soft);color:var(--primary);font-weight:700}
+.search-box{flex:1;display:flex;min-width:200px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card)}
+.search-box input{flex:1;border:none;background:transparent;padding:0 14px;height:42px;outline:none;min-width:0}
+.search-box button{background:var(--primary);color:#fff;padding:0 20px;font-weight:700}
+.search-box button:hover{background:var(--primary-h)}
+@media(max-width:640px){.search-row .btn{height:38px}.search-box input{height:38px}}
+
+/* ===== Banner ===== */
+.banner{border-radius:20px;overflow:hidden;background:linear-gradient(120deg,#450a0a,#dc2626 55%,#f97316);color:#fff;padding:34px 28px;margin-bottom:20px;position:relative}
+.banner::after{content:"₽";position:absolute;right:18px;top:-30px;font-size:180px;font-weight:900;opacity:.15;transform:rotate(12deg)}
+.banner h2{font-size:clamp(22px,4vw,36px);letter-spacing:-.02em;margin-bottom:8px;max-width:640px}
+.banner p{opacity:.85;margin-bottom:16px;max-width:560px}
+.banner .row{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#451a03}
+.btn-gold:hover{filter:brightness(1.05)}
+.btn-ghost-w{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
+.btn-ghost-w:hover{background:rgba(255,255,255,.22)}
+
+/* ===== Stats dark card ===== */
+.stats{background:linear-gradient(135deg,#1c1917,#44403c);color:#fff;border-radius:20px;padding:22px;display:flex;gap:18px;justify-content:space-between;flex-wrap:wrap;margin-bottom:24px;border:1px solid var(--border)}
+.stats small{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.6)}
+.stats-nums{display:flex;gap:36px;margin-top:12px;flex-wrap:wrap}
+.stats-nums b{font-size:30px;display:block;letter-spacing:-.02em}
+.stats-nums span{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.65)}
+.stats-btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stats-btns a,.stats-btns button{display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:600}
+.stats-btns a:hover,.stats-btns button:hover{background:rgba(255,255,255,.2)}
+
+/* ===== Sections ===== */
+section.block{margin-bottom:30px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.sec-head h2{font-size:22px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.sec-head p{font-size:12px;color:var(--muted);margin-top:2px}
+.sec-head .link{font-size:14px;font-weight:600;color:var(--primary);white-space:nowrap}
+.sec-head .link:hover{text-decoration:underline}
+
+/* categories grid */
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:640px){.cats{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1024px){.cats{grid-template-columns:repeat(7,1fr)}}
+.cat-tile{border-radius:16px;aspect-ratio:1/.92;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff;font-weight:700;font-size:12px;text-align:center;padding:8px;border:none;box-shadow:inset 0 -30px 40px rgba(0,0,0,.18);transition:transform .15s}
+.cat-tile:hover{transform:translateY(-3px)}
+.cat-tile span.e{font-size:30px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.3))}
+
+/* vidosy */
+.vrow{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+.vcard{flex-shrink:0;width:150px;aspect-ratio:9/15;border-radius:14px;position:relative;overflow:hidden;color:#fff;scroll-snap-align:start;border:none;text-align:left}
+.vcard .emo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px}
+.vcard .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),transparent 40%,rgba(0,0,0,.75))}
+.vcard .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.9);color:#111;display:flex;align-items:center;justify-content:center;font-size:18px}
+.vcard .meta{position:absolute;left:8px;right:8px;bottom:8px;font-size:11px;font-weight:600}
+.vcard .views{position:absolute;top:8px;left:8px;font-size:11px;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:8px}
+.vcard .price{position:absolute;top:8px;right:8px;font-size:11px;font-weight:800;background:var(--gold);color:#451a03;padding:2px 8px;border-radius:8px}
+
+/* listing cards */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1024px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1150px){.grid.cols6{grid-template-columns:repeat(6,1fr)}}
+.card{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card);transition:.15s;position:relative}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.card-img{aspect-ratio:1;position:relative;display:flex;align-items:center;justify-content:center;font-size:64px;overflow:hidden}
+.card-img .badge{position:absolute;top:8px;left:8px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px;background:var(--primary);color:#fff}
+.card-img .badge.free{background:var(--gold);color:#451a03}
+.card-img .badge.auction{background:var(--red);color:#fff}
+.fav{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);color:#52525b;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.fav.on{color:var(--red)}
+.card-body{padding:10px 12px 12px}
+.card-price{font-weight:800;font-size:17px}
+.card-price.free{color:var(--primary)}
+.card-title{font-size:14px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:42px}
+.card-sub{font-size:12px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between;gap:6px}
+.bid-row{display:flex;gap:6px;margin-top:8px}
+.bid-row .btn{flex:1}
+.timer{font-size:12px;font-weight:700;color:var(--red);margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* filter chips + sort */
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;overflow-x:auto;flex:1;padding-bottom:2px}
+.chip{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;background:var(--card)}
+.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.sortsel{height:36px;border:1px solid var(--border);border-radius:10px;background:var(--card);padding:0 10px;font-size:13px}
+
+/* seo */
+.seo{font-size:14px;color:var(--muted);line-height:1.7;margin:10px 0 34px}
+.seo p{margin-bottom:10px}
+
+/* ===== Footer ===== */
+footer.site{background:#000;color:#fff;margin-top:10px}
+footer.site .container{padding-top:48px;padding-bottom:24px}
+.f-grid{display:grid;grid-template-columns:1fr;gap:32px}
+@media(min-width:768px){.f-grid{grid-template-columns:1.4fr 1fr 1fr 1fr}}
+.f-brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;margin-bottom:14px}
+.f-brand .coin{width:36px;height:36px;font-size:19px}
+.f-desc{color:#a1a1aa;font-size:14px;margin-bottom:20px;max-width:380px}
+.f-soc{display:flex;flex-direction:column;gap:10px}
+.f-soc a{display:flex;align-items:center;gap:10px;color:#a1a1aa;font-size:14px;font-weight:600}
+.f-soc a:hover{color:#fff}
+.soc{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+footer.site h3{font-size:16px;margin-bottom:14px}
+footer.site ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+footer.site ul a,footer.site ul button{color:#a1a1aa;font-size:14px}
+footer.site ul a:hover,footer.site ul button:hover{color:#fff}
+.f-bottom{border-top:1px solid #27272a;margin-top:40px;padding-top:24px;display:flex;flex-direction:column;gap:16px}
+.f-legal{color:#a1a1aa;font-size:13px}
+.f-legal a{text-decoration:underline}
+.f-legal a:hover{color:#fff}
+.f-links{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px}
+.f-links a{color:#a1a1aa}
+.f-links a:hover{color:#fff}
+.stores{display:flex;gap:10px;flex-wrap:wrap}
+.store{display:flex;align-items:center;gap:8px;border:1px solid #3f3f46;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700}
+.store:hover{background:#18181b}
+.store small{display:block;font-size:9px;font-weight:400;color:#a1a1aa}
+
+/* ===== FAB chat ===== */
+.fab{position:fixed;right:20px;bottom:88px;z-index:40;width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.3);border:2px solid var(--bg)}
+.fab:hover{transform:scale(1.06)}
+@media(min-width:1024px){.fab{bottom:24px}}
+.chat{position:fixed;right:16px;bottom:152px;z-index:70;width:min(340px,calc(100vw - 32px));height:440px;max-height:70vh;background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);display:none;flex-direction:column;overflow:hidden}
+@media(min-width:1024px){.chat{bottom:92px}}
+.chat.open{display:flex}
+.chat-head{background:var(--primary);color:#fff;padding:12px 14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.chat-body{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg2)}
+.msg{max-width:85%;padding:8px 12px;border-radius:12px;font-size:13px;background:var(--card);border:1px solid var(--border);align-self:flex-start}
+.msg.me{align-self:flex-end;background:var(--primary);color:#fff;border-color:var(--primary)}
+.chat-in{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border)}
+.chat-in input{flex:1;border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:var(--bg);min-width:0;outline:none}
+
+/* ===== Modals ===== */
+.modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.open{display:flex}
+.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.modal-box{position:relative;background:var(--card);border:1px solid var(--border);border-radius:20px;width:100%;max-width:440px;max-height:90vh;overflow:auto;padding:24px;box-shadow:var(--shadow)}
+.modal-box h3{font-size:20px;margin-bottom:4px}
+.modal-box .sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg);outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--ring)}
+.field textarea{resize:vertical;min-height:80px}
+.x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.x:hover{background:var(--bg2)}
+.viewer{max-width:340px;text-align:center}
+.viewer .big{width:220px;height:320px;border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:90px;color:#fff;position:relative;overflow:hidden}
+.progress{display:flex;gap:4px;margin-bottom:12px}
+.progress i{flex:1;height:3px;border-radius:2px;background:var(--border);overflow:hidden;position:relative}
+.progress i.on::after{content:"";position:absolute;inset:0;background:#fff}
+
+/* toast */
+.toasts{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:8px;width:min(400px,calc(100vw - 32px))}
+@media(min-width:1024px){.toasts{bottom:30px}}
+.toast{background:#18181b;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center;animation:up .25s}
+html[data-theme="dark"] .toast{background:#fafafa;color:#09090b}
+@keyframes up{from{opacity:0;transform:translateY(10px)}}
+
+/* cookie */
+.cookie{position:fixed;left:16px;bottom:88px;z-index:65;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px;max-width:360px;display:none}
+@media(min-width:1024px){.cookie{bottom:24px}}
+.cookie.open{display:block}
+.cookie p{font-size:13px;color:var(--muted);margin-bottom:12px}
+
+/* bottom nav */
+.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:55;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+@media(min-width:1024px){.bottomnav{display:none}}
+.bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);padding:6px;border-radius:10px;position:relative}
+.bottomnav button.active{color:var(--primary)}
+.bottomnav .plus{width:46px;height:46px;border-radius:50%;background:var(--primary);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 4px 14px rgba(0,0,0,.3);border:3px solid var(--bg)}
+body{padding-bottom:70px}
+@media(min-width:1024px){body{padding-bottom:0}}
+
+.empty{text-align:center;padding:40px 10px;color:var(--muted)}
+.empty .big{font-size:54px;margin-bottom:10px}
+.load-more{display:flex;justify-content:center;margin-top:18px}
+.skel{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}
+.skel .i{aspect-ratio:1;background:linear-gradient(90deg,var(--bg2) 25%,var(--border) 50%,var(--bg2) 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+.skel .t{padding:12px;display:flex;flex-direction:column;gap:8px}
+.skel .t i{display:block;height:14px;border-radius:6px;background:linear-gradient(90deg,var(--bg2) 25%,var(--border) 50%,var(--bg2) 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<h1 class="sr-only">Копейкино — бесплатная доска объявлений России</h1>
+
+<!-- ===== HEADER ===== -->
+<header class="site" id="site-header">
+  <div class="container header-in">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0">
+      <a class="brand" href="#" aria-label="Копейкино — на главную"><span class="coin">К</span><span>Копейкино</span></a>
+      <div class="cat-wrap only-desktop">
+        <button class="loc-btn" id="locBtn" aria-haspopup="true">📍 <span id="locName">Москва</span> ▾</button>
+        <div class="cat-menu" id="locMenu" style="width:240px"></div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeBtn" aria-label="Переключить тему" title="Переключить тему">🌙</button>
+      <button class="icon-btn rel only-desktop" id="favBtn" aria-label="Избранное" title="Избранное" style="font-size:20px">♡<span class="fav-count" id="favCount" style="display:none">0</span></button>
+      <button class="btn only-desktop" id="loginBtn">Войти</button>
+      <button class="btn btn-primary only-desktop" id="postBtn">+ Разместить объявление</button>
+      <button class="icon-btn only-mobile" id="menuBtn" aria-label="Меню" style="font-size:22px">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- mobile drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-bg" data-close="drawer"></div>
+  <div class="drawer-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <b style="font-size:18px">Меню</b>
+      <button class="icon-btn" data-close="drawer" style="font-size:20px">✕</button>
+    </div>
+    <button class="row" id="mLocation">📍 <span>Город: <b id="locNameM">Москва</b></span></button>
+    <button class="row" id="mLogin">👤 Войти / Профиль</button>
+    <button class="row" id="mPost">＋ Разместить объявление</button>
+    <button class="row" id="mFav">♡ Избранное (<span id="favCountM">0</span>)</button>
+    <a href="#auctions">🔨 Аукционы</a>
+    <a href="#vidosy">▶ Видосы</a>
+    <a href="#free">🎁 Отдам даром</a>
+    <a href="#cats">🧩 Все категории</a>
+    <a href="#about">ℹ О нас</a>
+  </div>
+</div>
+
+<main>
+<div class="container">
+
+  <!-- ===== STORIES ===== -->
+  <section aria-label="Истории" style="margin-bottom:6px">
+    <div class="stories no-bar" id="stories"></div>
+  </section>
+
+  <!-- ===== SEARCH ===== -->
+  <div class="search-row">
+    <div class="cat-wrap">
+      <button class="btn" id="catBtn">▦ <span id="catCur">Все категории</span> ▾</button>
+      <div class="cat-menu" id="catMenu"></div>
+    </div>
+    <div class="search-box">
+      <input id="search" type="search" placeholder="Поиск по объявлениям: iPhone, квартира, диван…" autocomplete="off"/>
+      <button id="searchBtn">Найти</button>
+    </div>
+  </div>
+
+  <!-- ===== BANNER ===== -->
+  <section class="banner" aria-label="Промо">
+    <h2>Продавай легко — покупай выгодно 💰</h2>
+    <p>Размещайте объявления бесплатно и зарабатывайте вместе с Копейкино. Тысячи новых предложений по всей России каждый день.</p>
+    <div class="row">
+      <button class="btn btn-gold" data-post>Разместить объявление</button>
+      <a class="btn btn-ghost-w" href="#listings">Смотреть объявления</a>
+    </div>
+  </section>
+
+  <!-- ===== STATS ===== -->
+  <section class="stats" id="about" aria-label="Копейкино в цифрах">
+    <div>
+      <small>Копейкино в цифрах</small>
+      <div class="stats-nums">
+        <div><b id="statAds">128 400</b><span>объявлений</span></div>
+        <div><b id="statUsers">46 900</b><span>пользователей</span></div>
+        <div><b>0 ₽</b><span>размещение</span></div>
+      </div>
+    </div>
+    <div class="stats-btns">
+      <a href="#seo">ℹ О нас</a>
+      <button data-idea>💡 Идея</button>
+      <button data-donate>♡ Поддержать</button>
+    </div>
+  </section>
+
+  <!-- ===== CATEGORIES ===== -->
+  <section class="block" id="cats">
+    <div class="sec-head">
+      <div><h2>Категории</h2><p>Выберите раздел — объявления отфильтруются ниже</p></div>
+    </div>
+    <div class="cats" id="catGrid"></div>
+  </section>
+
+  <!-- ===== VIDOSY ===== -->
+  <section class="block" id="vidosy">
+    <div class="sec-head">
+      <div><h2>▶ Видосы</h2><p>Смотрите товары вживую</p></div>
+      <button class="link" data-toast="Раздел «Видосы» скоро откроется полностью">Смотреть все</button>
+    </div>
+    <div class="vrow no-bar" id="vrow"></div>
+  </section>
+
+  <!-- ===== FREE ===== -->
+  <section class="block" id="free">
+    <div class="sec-head">
+      <div><h2>Отдам даром</h2><p>Бесплатные вещи рядом с вами</p></div>
+      <button class="link" data-free-all>Смотреть все</button>
+    </div>
+    <div class="grid cols6" id="freeGrid"></div>
+  </section>
+
+  <!-- ===== AUCTIONS ===== -->
+  <section class="block" id="auctions">
+    <div class="sec-head">
+      <div><h2>Активные аукционы</h2><p>Участвуйте в торгах и находите уникальные предложения</p></div>
+      <button class="btn btn-sm" data-toast="Все аукционы: демо-режим">🔨 Все аукционы</button>
+    </div>
+    <div class="grid" id="aucGrid"></div>
+  </section>
+
+  <!-- ===== ALL LISTINGS ===== -->
+  <section class="block" id="listings">
+    <div class="sec-head">
+      <div><h2 id="listTitle">Все объявления</h2><p id="listCount"></p></div>
+    </div>
+    <div class="toolbar">
+      <div class="chips no-bar" id="chips"></div>
+      <select class="sortsel" id="sort">
+        <option value="new">Сначала новые</option>
+        <option value="cheap">Сначала дешевле</option>
+        <option value="exp">Сначала дороже</option>
+      </select>
+    </div>
+    <div class="grid" id="adsGrid"></div>
+    <div class="load-more"><button class="btn" id="moreBtn">Показать ещё</button></div>
+  </section>
+
+  <!-- ===== SEO ===== -->
+  <section class="seo" id="seo">
+    <p>Копейкино — современная доска объявлений по всей России: здесь можно быстро купить или продать товары, недвижимость и автомобили, а также найти услуги и работу рядом с вами. Мы соединяем продавцов и покупателей и помогаем заключать безопасные и выгодные сделки.</p>
+    <p>На Копейкино есть как новые, так и б/у товары: от техники и смартфонов до мебели, одежды и детских вещей. Удобный поиск по категориям, фильтры и сортировка помогут быстро найти подходящее предложение, а подробные карточки с фотографиями и описаниями — сравнить варианты и принять взвешенное решение.</p>
+    <p>Размещайте объявления бесплатно, общайтесь через встроенный чат, следите за просмотрами и добавляйте интересные предложения в избранное. Копейкино развивается каждый день, чтобы покупка и продажа вещей в интернете были максимально простыми и понятными для пользователей по всей стране.</p>
+  </section>
+
+</div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site">
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <a class="f-brand" href="#"><span class="coin">К</span>Копейкино</a>
+        <p class="f-desc">Копейкино — это платформа для продаж, где вы получаете деньги за то, что публикуете свои объявления. Размещай свои товары и зарабатывай деньги вместе с Копейкино!</p>
+        <div class="f-soc">
+          <a href="https://t.me/K0PEIKA" target="_blank" rel="noopener"><span class="soc" style="background:#229ED9">✈</span>Telegram</a>
+          <a href="https://vk.ru/club236871533" target="_blank" rel="noopener"><span class="soc" style="background:#0077FF">B</span>ВКонтакте</a>
+          <a href="https://www.tiktok.com/@kopeikashop" target="_blank" rel="noopener"><span class="soc" style="background:#111;border:1px solid #444">♪</span>TikTok</a>
+          <a href="https://www.youtube.com/@kopeikashop" target="_blank" rel="noopener"><span class="soc" style="background:#FF0000">▶</span>YouTube</a>
+        </div>
+      </div>
+      <div>
+        <h3>Навигация</h3>
+        <ul>
+          <li><a href="#">Главная</a></li>
+          <li><a href="#about">О нас</a></li>
+          <li><a href="#seo">Частые вопросы</a></li>
+          <li><a href="#seo">Безопасные сделки</a></li>
+          <li><a href="#seo">Проверка авто по VIN</a></li>
+          <li><a href="#seo">Инструкции</a></li>
+          <li><a href="#seo">Рейтинг продавцов</a></li>
+          <li><button data-post>Разместить объявление</button></li>
+          <li><button data-toast="Войдите, чтобы увидеть свои объявления">Мои объявления</button></li>
+          <li><button id="fFav">Избранное</button></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Категории</h3>
+        <ul id="fCats"></ul>
+      </div>
+      <div>
+        <h3>Контакты</h3>
+        <ul><li><a href="mailto:info@kopeika.shop">✉ info@kopeika.shop</a></li></ul>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <div class="f-legal">
+        <p>© 2026 Копейкино. Все права защищены.</p>
+        <p style="margin-top:6px">Копейкино использует <a href="#seo">рекомендательные технологии</a>.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="f-links">
+          <a href="#seo">Условия использования</a><a href="#seo">Политика конфиденциальности</a>
+          <a href="#seo">Политика cookie</a><a href="#seo">Публичная оферта</a>
+          <a href="#seo">Помощь</a><a href="#seo">Правила вознаграждений</a>
+        </div>
+        <div class="stores">
+          <a class="store" href="https://apps.apple.com/us/app/kopeikino/id6753788361" target="_blank" rel="noopener">🍎<span><small>Загрузите в</small>App Store</span></a>
+          <a class="store" href="https://play.google.com/store/apps/details?id=ru.kopeika.app" target="_blank" rel="noopener">▶<span><small>Скачайте в</small>Google Play</span></a>
+          <a class="store" href="https://www.rustore.ru/catalog/app/ru.kopeika.app" target="_blank" rel="noopener">R<span><small>Скачайте в</small>RuStore</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== FAB + CHAT ===== -->
+<button class="fab" id="chatFab" aria-label="Чат с поддержкой" style="font-size:24px">🎧</button>
+<div class="chat" id="chat" role="dialog" aria-label="Чат поддержки">
+  <div class="chat-head"><span>💬 Поддержка Копейкино</span><button data-close="chat" style="font-size:18px">✕</button></div>
+  <div class="chat-body" id="chatBody">
+    <div class="msg">Здравствуйте! 👋 Это поддержка Копейкино. Чем помочь?</div>
+  </div>
+  <div class="chat-in">
+    <input id="chatIn" placeholder="Напишите сообщение…"/>
+    <button class="btn btn-primary btn-sm" id="chatSend">➤</button>
+  </div>
+</div>
+
+<!-- ===== STORY VIEWER ===== -->
+<div class="modal" id="storyModal">
+  <div class="modal-bg" data-close="storyModal"></div>
+  <div class="modal-box viewer">
+    <button class="x" data-close="storyModal">✕</button>
+    <div class="progress"><i class="on"></i><i></i><i></i></div>
+    <div class="big" id="storyBig">📦</div>
+    <h3 id="storyTitle">История</h3>
+    <p class="sub" id="storySub"></p>
+    <button class="btn btn-primary btn-block" data-close="storyModal">Смотреть объявление</button>
+  </div>
+</div>
+
+<!-- ===== AUTH ===== -->
+<div class="modal" id="authModal">
+  <div class="modal-bg" data-close="authModal"></div>
+  <div class="modal-box">
+    <button class="x" data-close="authModal">✕</button>
+    <h3>Вход в Копейкино</h3>
+    <p class="sub">Введите номер телефона — пришлём код из 4 цифр (демо: любой код подойдёт)</p>
+    <div class="field"><label>Телефон</label><input id="phone" inputmode="tel" placeholder="+7 (___) ___-__-__"/></div>
+    <div class="field"><label>Код из SMS</label><input id="code" inputmode="numeric" maxlength="4" placeholder="••••"/></div>
+    <button class="btn btn-primary btn-block" id="authGo">Войти</button>
+  </div>
+</div>
+
+<!-- ===== POST AD ===== -->
+<div class="modal" id="postModal">
+  <div class="modal-bg" data-close="postModal"></div>
+  <div class="modal-box">
+    <button class="x" data-close="postModal">✕</button>
+    <h3>Новое объявление</h3>
+    <p class="sub">Размещение бесплатное. Объявление сразу появится в ленте.</p>
+    <div class="field"><label>Название</label><input id="adTitle" placeholder="Например: iPhone 13, 128 ГБ"/></div>
+    <div class="field"><label>Цена, ₽ (0 — даром)</label><input id="adPrice" inputmode="numeric" placeholder="0"/></div>
+    <div class="field"><label>Категория</label><select id="adCat"></select></div>
+    <div class="field"><label>Город</label><select id="adCity"></select></div>
+    <div class="field"><label>Описание</label><textarea id="adDesc" placeholder="Состояние, комплектация, причина продажи…"></textarea></div>
+    <button class="btn btn-primary btn-block" id="adGo">Опубликовать бесплатно</button>
+  </div>
+</div>
+
+<!-- ===== BID ===== -->
+<div class="modal" id="bidModal">
+  <div class="modal-bg" data-close="bidModal"></div>
+  <div class="modal-box">
+    <button class="x" data-close="bidModal">✕</button>
+    <h3 id="bidTitle">Ставка</h3>
+    <p class="sub" id="bidSub"></p>
+    <div class="field"><label>Ваша ставка, ₽</label><input id="bidVal" inputmode="numeric"/></div>
+    <button class="btn btn-block" style="background:var(--red);border-color:var(--red);color:#fff" id="bidGo">Сделать ставку</button>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="cookie" id="cookie">
+  <b style="font-size:14px">🍪 Мы используем cookie</b>
+  <p>Оставаясь на сайте, вы соглашаетесь с политикой использования cookie и обработкой данных.</p>
+  <button class="btn btn-primary btn-sm btn-block" id="cookieOk">Понятно</button>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav class="bottomnav" aria-label="Нижняя навигация">
+  <button class="active" data-nav="top">⌂<span>Главная</span></button>
+  <button data-nav="listings">🔍<span>Поиск</span></button>
+  <button data-post><span class="plus">+</span><span>Продать</span></button>
+  <button data-nav="free">🎁<span>Даром</span></button>
+  <button id="navProfile">👤<span>Профиль</span></button>
+</nav>
+
+<script>
+"use strict";
+/* ---------- safe storage (sandbox-safe) ---------- */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- data ---------- */
+const CATS=[
+ {id:"auto",n:"Транспорт",e:"🚗",g:"linear-gradient(135deg,#0ea5e9,#1d4ed8)"},
+ {id:"realty",n:"Недвижимость",e:"🏠",g:"linear-gradient(135deg,#8b5cf6,#6d28d9)"},
+ {id:"job",n:"Работа",e:"💼",g:"linear-gradient(135deg,#f59e0b,#b45309)"},
+ {id:"uslugi",n:"Услуги",e:"🛠",g:"linear-gradient(135deg,#14b8a6,#0f766e)"},
+ {id:"tech",n:"Электроника",e:"📱",g:"linear-gradient(135deg,#6366f1,#312e81)"},
+ {id:"home",n:"Дом и дача",e:"🛋",g:"linear-gradient(135deg,#84cc16,#3f6212)"},
+ {id:"cloth",n:"Личные вещи",e:"👗",g:"linear-gradient(135deg,#ec4899,#9d174d)"},
+ {id:"kids",n:"Детям",e:"🧸",g:"linear-gradient(135deg,#f472b6,#db2777)"},
+ {id:"pets",n:"Животные",e:"🐾",g:"linear-gradient(135deg,#fb923c,#c2410c)"},
+ {id:"beauty",n:"Красота",e:"💄",g:"linear-gradient(135deg,#e879f9,#a21caf)"},
+ {id:"sport",n:"Спорт",e:"⚽",g:"linear-gradient(135deg,#22c55e,#14532d)"},
+ {id:"biz",n:"Бизнес",e:"🏭",g:"linear-gradient(135deg,#64748b,#1e293b)"},
+ {id:"free",n:"Отдам даром",e:"🎁",g:"linear-gradient(135deg,#fbbf24,#dc2626)"},
+ {id:"auc",n:"Аукционы",e:"🔨",g:"linear-gradient(135deg,#ef4444,#7f1d1d)"}
+];
+const CITIES=["Москва","Санкт-Петербург","Казань","Новосибирск","Екатеринбург","Нижний Новгород","Краснодар","Самара","Ростов-на-Дону","Вся Россия"];
+let ADS=[
+ {id:1,t:"iPhone 13, 128 ГБ, идеальное состояние",p:38990,c:"tech",e:"📱",g:"linear-gradient(135deg,#1e3a8a,#3b82f6)",city:"Москва",time:"2 мин назад",ts:1,views:214},
+ {id:2,t:"2-комнатная квартира у метро, 54 м²",p:12500000,c:"realty",e:"🏢",g:"linear-gradient(135deg,#6d28d9,#c4b5fd)",city:"Москва",time:"15 мин назад",ts:2,views:98},
+ {id:3,t:"Toyota Camry 2020, один владелец",p:2350000,c:"auto",e:"🚗",g:"linear-gradient(135deg,#0c4a6e,#38bdf8)",city:"Казань",time:"32 мин назад",ts:3,views:341},
+ {id:4,t:"Диван угловой, почти новый",p:0,c:"free",e:"🛋",g:"linear-gradient(135deg,#65a30d,#fef08a)",city:"Санкт-Петербург",time:"час назад",ts:4,views:187},
+ {id:5,t:"Курьер на личном авто, от 90 000 ₽",p:90000,c:"job",e:"💼",g:"linear-gradient(135deg,#92400e,#fbbf24)",city:"Москва",time:"час назад",ts:5,views:76},
+ {id:6,t:"Ремонт квартир под ключ, договор",p:1500,c:"uslugi",e:"🛠",g:"linear-gradient(135deg,#134e4a,#2dd4bf)",city:"Новосибирск",time:"2 часа назад",ts:6,views:54},
+ {id:7,t:"Ноутбук игровой RTX 4060, 16 ГБ",p:89990,c:"tech",e:"💻",g:"linear-gradient(135deg,#312e81,#818cf8)",city:"Екатеринбург",time:"3 часа назад",ts:7,views:412},
+ {id:8,t:"Щенки лабрадора, с документами",p:25000,c:"pets",e:"🐶",g:"linear-gradient(135deg,#7c2d12,#fdba74)",city:"Краснодар",time:"4 часа назад",ts:8,views:529},
+ {id:9,t:"Кроссовки Nike, 42 размер, новые",p:7990,c:"cloth",e:"👟",g:"linear-gradient(135deg,#881337,#fb7185)",city:"Москва",time:"5 часов назад",ts:9,views:133},
+ {id:10,t:"Детская коляска 2 в 1",p:0,c:"free",e:"🍼",g:"linear-gradient(135deg,#9d174d,#f9a8d4)",city:"Самара",time:"вчера",ts:10,views:245},
+ {id:11,t:"Велосипед горный, 29\", на ходу",p:18990,c:"sport",e:"🚲",g:"linear-gradient(135deg,#14532d,#4ade80)",city:"Нижний Новгород",time:"вчера",ts:11,views:167},
+ {id:12,t:"Кофейня в центре, готовый бизнес",p:1800000,c:"biz",e:"☕",g:"linear-gradient(135deg,#1e293b,#94a3b8)",city:"Москва",time:"вчера",ts:12,views:88}
+];
+const VIDEOS=[
+ {t:"Обзор iPhone 13 за 30 сек",e:"📱",g:"linear-gradient(160deg,#1e3a8a,#0ea5e9)",v:"12,4 тыс.",p:"38 990 ₽"},
+ {t:"Квартира 54 м² — румтур",e:"🏠",g:"linear-gradient(160deg,#6d28d9,#a78bfa)",v:"8,1 тыс.",p:"12,5 млн ₽"},
+ {t:"Camry 2020: честный показ",e:"🚗",g:"linear-gradient(160deg,#0c4a6e,#22d3ee)",v:"21 тыс.",p:"2,35 млн ₽"},
+ {t:"Щенки лабрадора 🐶",e:"🐶",g:"linear-gradient(160deg,#9a3412,#fb923c)",v:"45 тыс.",p:"25 000 ₽"},
+ {t:"Игровой ноут в деле",e:"🎮",g:"linear-gradient(160deg,#312e81,#e879f9)",v:"9,7 тыс.",p:"89 990 ₽"},
+ {t:"Коляска: сборка за минуту",e:"🍼",g:"linear-gradient(160deg,#831843,#f472b6)",v:"5,2 тыс.",p:"Даром"}
+];
+let AUCS=[
+ {id:101,t:"Монета 1 копейка 1704 года",p:15000,step:500,e:"🪙",g:"linear-gradient(135deg,#78350f,#fbbf24)",city:"Москва",end:Date.now()+2*3600e3+14*60e3,bids:23},
+ {id:102,t:"Картина маслом «Закат», 60×80",p:45000,step:1000,e:"🖼",g:"linear-gradient(135deg,#7f1d1d,#fca5a5)",city:"Санкт-Петербург",end:Date.now()+5*3600e3+41*60e3,bids:11},
+ {id:103,t:"Гитара Fender Stratocaster 1998",p:120000,step:2000,e:"🎸",g:"linear-gradient(135deg,#111827,#6b7280)",city:"Казань",end:Date.now()+26*3600e3,bids:34},
+ {id:104,t:"Часы «Победа», СССР, на ходу",p:8000,step:300,e:"⌚",g:"linear-gradient(135deg,#14532d,#a3e635)",city:"Самара",end:Date.now()+49*3600e3,bids:7}
+];
+const STORIES=[
+ {n:"Электроника",e:"📱",g:"linear-gradient(135deg,#1e3a8a,#3b82f6)"},
+ {n:"Авто",e:"🚗",g:"linear-gradient(135deg,#0c4a6e,#38bdf8)"},
+ {n:"Недвижимость",e:"🏠",g:"linear-gradient(135deg,#6d28d9,#a78bfa)"},
+ {n:"Даром",e:"🎁",g:"linear-gradient(135deg,#b45309,#fbbf24)"},
+ {n:"Питомцы",e:"🐾",g:"linear-gradient(135deg,#c2410c,#fdba74)"},
+ {n:"Работа",e:"💼",g:"linear-gradient(135deg,#92400e,#fde68a)"},
+ {n:"Аукционы",e:"🔨",g:"linear-gradient(135deg,#7f1d1d,#ef4444)"},
+ {n:"Скидки",e:"🏷",g:"linear-gradient(135deg,#9d174d,#f472b6)"}
+];
+
+/* ---------- state ---------- */
+let favs=new Set(store.get("k_favs",[]));
+let user=store.get("k_user",null);
+let curCat="all", query="", favOnly=false, shown=8;
+let city=store.get("k_city","Москва");
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString("ru-RU")+" ₽";
+const catById=id=>CATS.find(c=>c.id===id)||CATS[4];
+
+/* ---------- toast ---------- */
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;$("toasts").appendChild(d);setTimeout(()=>d.remove(),2600)}
+
+/* ---------- theme ---------- */
+function setTheme(t){document.documentElement.dataset.theme=t;store.set("k_theme",t);$("themeBtn").textContent=t==="dark"?"☀️":"🌙"}
+setTheme(store.get("k_theme","light"));
+$("themeBtn").onclick=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+
+/* ---------- stories ---------- */
+function renderStories(){
+ const w=$("stories");w.innerHTML="";
+ const add=document.createElement("button");add.className="story story-add";add.type="button";
+ add.innerHTML='<span class="story-ring"><span class="story-in"><span class="story-ava">+</span></span></span><span class="story-name">История</span>';
+ add.onclick=()=>toast("Войдите, чтобы добавить историю");
+ w.appendChild(add);
+ const seen=store.get("k_seen",[]);
+ STORIES.forEach((s,i)=>{
+  const b=document.createElement("button");b.className="story";b.type="button";
+  b.innerHTML=`<span class="story-ring ${seen.includes(i)?"seen":""}"><span class="story-in"><span class="story-ava" style="background:${s.g}">${s.e}</span></span></span><span class="story-name">${s.n}</span>`;
+  b.onclick=()=>{seen.includes(i)||seen.push(i);store.set("k_seen",seen);renderStories();
+   $("storyBig").style.background=s.g;$("storyBig").textContent=s.e;
+   $("storyTitle").textContent=s.n;$("storySub").textContent="Подборка • сегодня";
+   openModal("storyModal")};
+  w.appendChild(b);
+ });
+}
+
+/* ---------- categories ---------- */
+function renderCatGrid(){
+ const g=$("catGrid");g.innerHTML="";
+ CATS.forEach(c=>{
+  const b=document.createElement("button");b.className="cat-tile";b.style.background=c.g;
+  b.innerHTML=`<span class="e">${c.e}</span><span>${c.n}</span>`;
+  b.onclick=()=>{setCat(c.id);document.querySelector("#listings").scrollIntoView({behavior:"smooth"})};
+  g.appendChild(b);
+ });
+}
+function renderCatMenu(){
+ const m=$("catMenu");m.innerHTML="";
+ const mk=(id,n)=>{const b=document.createElement("button");b.textContent=n;b.className=id===curCat?"active":"";
+  b.onclick=()=>{setCat(id);m.classList.remove("open")};m.appendChild(b)};
+ mk("all","▦ Все категории");CATS.forEach(c=>mk(c.id,c.e+" "+c.n));
+}
+function setCat(id){curCat=id;favOnly=false;shown=8;
+ $("catCur").textContent=id==="all"?"Все категории":catById(id).n;
+ $("listTitle").textContent=id==="all"?"Все объявления":catById(id).n;
+ renderCatMenu();renderChips();renderAds()}
+$("catBtn").onclick=e=>{e.stopPropagation();$("locMenu").classList.remove("open");$("catMenu").classList.toggle("open")};
+
+/* ---------- cities ---------- */
+function renderCities(){
+ const m=$("locMenu");m.innerHTML="";
+ CITIES.forEach(c=>{const b=document.createElement("button");b.textContent=(c===city?"✓ ":"")+c;b.className=c===city?"active":"";
+  b.onclick=()=>{city=c;store.set("k_city",c);$("locName").textContent=c;$("locNameM").textContent=c;m.classList.remove("open");toast("Город: "+c)};m.appendChild(b)});
+}
+$("locBtn").onclick=e=>{e.stopPropagation();$("catMenu").classList.remove("open");$("locMenu").classList.toggle("open")};
+document.addEventListener("click",()=>{$("catMenu").classList.remove("open");$("locMenu").classList.remove("open")});
+$("mLocation").onclick=()=>{const i=(CITIES.indexOf(city)+1)%CITIES.length;city=CITIES[i];store.set("k_city",city);$("locName").textContent=city;$("locNameM").textContent=city;toast("Город: "+city)};
+
+/* ---------- videos ---------- */
+function renderVideos(){
+ const r=$("vrow");r.innerHTML="";
+ VIDEOS.forEach(v=>{
+  const b=document.createElement("button");b.className="vcard";b.style.background=v.g;
+  b.innerHTML=`<span class="emo">${v.e}</span><span class="shade"></span><span class="views">👁 ${v.v}</span><span class="price">${v.p}</span><span class="play">▶</span><span class="meta">${v.t}</span>`;
+  b.onclick=()=>toast("▶ Воспроизведение: "+v.t);r.appendChild(b);
+ });
+}
+
+/* ---------- cards ---------- */
+function cardHTML(a){
+ const free=a.p===0;
+ return `<div class="card-img" style="background:${a.g}">${a.e}
+  ${free?'<span class="badge free">Даром</span>':""}
+  <button class="fav ${favs.has(a.id)?"on":""}" data-fav="${a.id}" aria-label="В избранное">${favs.has(a.id)?"♥":"♡"}</button></div>
+ <div class="card-body"><div class="card-price ${free?"free":""}">${free?"Даром":fmt(a.p)}</div>
+ <div class="card-title">${a.t}</div>
+ <div class="card-sub"><span>📍 ${a.city}</span><span>${a.time}</span></div></div>`;
+}
+function bindFavs(scope){
+ scope.querySelectorAll("[data-fav]").forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFav(+b.dataset.fav)});
+}
+function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);store.set("k_favs",[...favs]);updateFavUI();renderAds();renderFree();
+ toast(favs.has(id)?"♥ Добавлено в избранное":"Убрано из избранного")}
+function updateFavUI(){$("favCount").style.display=favs.size?"flex":"none";$("favCount").textContent=favs.size;$("favCountM").textContent=favs.size}
+
+/* ---------- free ---------- */
+function renderFree(){
+ const g=$("freeGrid");g.innerHTML="";
+ ADS.filter(a=>a.p===0).slice(0,6).forEach(a=>{const d=document.createElement("div");d.className="card";d.innerHTML=cardHTML(a);
+  d.onclick=()=>openAd(a);g.appendChild(d)});
+ bindFavs(g);
+}
+
+/* ---------- auctions ---------- */
+function left(ms){if(ms<0)ms=0;const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;
+ return h>0?`${h} ч ${m} мин ${ss} с`:`${m} мин ${ss} с`}
+function renderAucs(){
+ const g=$("aucGrid");g.innerHTML="";
+ AUCS.forEach(a=>{
+  const d=document.createElement("div");d.className="card";
+  d.innerHTML=`<div class="card-img" style="background:${a.g}">${a.e}<span class="badge auction">Аукцион</span></div>
+  <div class="card-body"><div class="card-price">${fmt(a.p)}</div><div class="card-title">${a.t}</div>
+  <div class="card-sub"><span>📍 ${a.city}</span><span>ставок: ${a.bids}</span></div>
+  <div class="timer" data-end="${a.end}">⏳ ${left(a.end-Date.now())}</div>
+  <div class="bid-row"><button class="btn btn-sm" style="background:var(--red);border-color:var(--red);color:#fff" data-bid="${a.id}">Сделать ставку</button></div></div>`;
+  g.appendChild(d);
+ });
+ g.querySelectorAll("[data-bid]").forEach(b=>b.onclick=()=>openBid(+b.dataset.bid));
+}
+setInterval(()=>{document.querySelectorAll("[data-end]").forEach(el=>{el.textContent="⏳ "+left(+el.dataset.end-Date.now())})},1000);
+let bidId=null;
+function openBid(id){const a=AUCS.find(x=>x.id===id);bidId=id;
+ $("bidTitle").textContent=a.t;$("bidSub").textContent=`Текущая ставка ${fmt(a.p)} • шаг ${fmt(a.step)}`;
+ $("bidVal").value=a.p+a.step;openModal("bidModal")}
+$("bidGo").onclick=()=>{const a=AUCS.find(x=>x.id===bidId);const v=parseInt(($("bidVal").value||"").replace(/\D/g,""),10)||0;
+ if(v<=a.p){toast("Ставка должна быть выше текущей");return}
+ a.p=v;a.bids++;renderAucs();closeModal("bidModal");toast("✅ Ставка принята: "+fmt(v))};
+
+/* ---------- listings ---------- */
+function filtered(){
+ let r=ADS.filter(a=>(curCat==="all"||a.c===curCat)&&(city==="Вся Россия"||a.city===city||query||favOnly));
+ if(query)r=r.filter(a=>a.t.toLowerCase().includes(query));
+ if(favOnly)r=r.filter(a=>favs.has(a.id));
+ const s=$("sort").value;
+ r=[...r].sort((x,y)=>s==="cheap"?x.p-y.p:s==="exp"?y.p-x.p:x.ts-y.ts);
+ return r;
+}
+function renderChips(){
+ const c=$("chips");c.innerHTML="";
+ const mk=(id,n)=>{const b=document.createElement("button");b.className="chip"+(curCat===id&&!favOnly?"active":"");b.textContent=n;
+  b.onclick=()=>setCat(id);c.appendChild(b)};
+ mk("all","Все");
+ ["tech","auto","realty","job","uslugi","cloth","pets","sport"].forEach(id=>mk(id,catById(id).n));
+}
+function renderAds(skeleton){
+ const g=$("adsGrid");
+ if(skeleton){g.innerHTML="";for(let i=0;i<8;i++){const d=document.createElement("div");d.className="skel";
+  d.innerHTML='<div class="i"></div><div class="t"><i style="width:40%"></i><i style="width:80%"></i></div>';g.appendChild(d)}return}
+ const r=filtered();
+ $("listCount").textContent=(favOnly?"В избранном: ":"Найдено: ")+r.length+" • "+city;
+ g.innerHTML="";
+ if(!r.length){g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="big">🔍</div><b>Ничего не найдено</b><br/>Попробуйте изменить запрос или город</div>'}
+ r.slice(0,shown).forEach(a=>{const d=document.createElement("div");d.className="card";d.innerHTML=cardHTML(a);
+  d.onclick=()=>openAd(a);g.appendChild(d)});
+ bindFavs(g);
+ $("moreBtn").style.display=r.length>shown?"":"none";
+}
+$("moreBtn").onclick=()=>{shown+=8;renderAds()};
+$("sort").onchange=()=>renderAds();
+let searchT=null;
+$("search").addEventListener("input",e=>{clearTimeout(searchT);searchT=setTimeout(()=>{query=e.target.value.trim().toLowerCase();
+ renderAds(true);setTimeout(()=>renderAds(),350)},400)});
+$("searchBtn").onclick=()=>{query=$("search").value.trim().toLowerCase();renderAds();
+ document.querySelector("#listings").scrollIntoView({behavior:"smooth"})};
+function openAd(a){toast(`👁 ${a.t} — ${a.p===0?"даром":fmt(a.p)} • просмотров: ${a.views+1}`)}
+
+/* ---------- fav filter ---------- */
+function showFavs(){favOnly=true;curCat="all";shown=8;$("listTitle").textContent="Избранное";
+ renderChips();renderAds();document.querySelector("#listings").scrollIntoView({behavior:"smooth"})}
+$("favBtn").onclick=showFavs;$("mFav").onclick=()=>{closeModal("drawer");showFavs()};$("fFav").onclick=showFavs;
+
+/* ---------- modals ---------- */
+function openModal(id){$(id).classList.add("open")}
+function closeModal(id){$(id).classList.remove("open")}
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
+$("drawer").classList.remove("open");
+
+/* ---------- auth ---------- */
+function refreshUser(){$("loginBtn").textContent=user?("👤 "+user):"Войти"}
+$("loginBtn").onclick=()=>user?(toast("Вы вошли как "+user)):openModal("authModal");
+$("mLogin").onclick=()=>{closeModal("drawer");user?toast("Вы вошли как "+user):openModal("authModal")};
+$("navProfile").onclick=()=>user?toast("Вы вошли как "+user):openModal("authModal");
+$("authGo").onclick=()=>{const p=$("phone").value.trim();
+ if(p.replace(/\D/g,"").length<6){toast("Введите корректный номер телефона");return}
+ if($("code").value.trim().length<4){toast("Введите код из 4 цифр");return}
+ user=p;store.set("k_user",user);refreshUser();closeModal("authModal");toast("✅ Добро пожаловать в Копейкино!")};
+
+/* ---------- post ad ---------- */
+function fillSelects(){
+ $("adCat").innerHTML=CATS.filter(c=>c.id!=="auc").map(c=>`<option value="${c.id}">${c.n}</option>`).join("");
+ $("adCity").innerHTML=CITIES.filter(c=>c!=="Вся Россия").map(c=>`<option ${c===city?"selected":""}>${c}</option>`).join("");
+}
+document.querySelectorAll("[data-post]").forEach(b=>b.onclick=()=>{closeModal("drawer");fillSelects();openModal("postModal")});
+$("postBtn").onclick=()=>{fillSelects();openModal("postModal")};
+$("mPost").onclick=()=>{closeModal("drawer");fillSelects();openModal("postModal")};
+$("adGo").onclick=()=>{
+ const t=$("adTitle").value.trim();if(!t){toast("Введите название");return}
+ const p=parseInt(($("adPrice").value||"").replace(/\D/g,""),10)||0;
+ const c=catById($("adCat").value);
+ ADS.unshift({id:Date.now(),t,p,c:c.id,e:c.e,g:c.g,city:$("adCity").value,time:"только что",ts:0,views:1});
+ closeModal("postModal");curCat="all";favOnly=false;query="";$("search").value="";$("listTitle").textContent="Все объявления";
+ renderChips();renderAds();renderFree();
+ $("adTitle").value="";$("adPrice").value="";$("adDesc").value="";
+ document.querySelector("#listings").scrollIntoView({behavior:"smooth"});
+ toast("🎉 Объявление опубликовано бесплатно!");
+};
+
+/* ---------- chat ---------- */
+$("chatFab").onclick=()=>$("chat").classList.toggle("open");
+function chatPush(text,me){const d=document.createElement("div");d.className="msg"+(me?" me":"");d.textContent=text;
+ $("chatBody").appendChild(d);$("chatBody").scrollTop=9999}
+$("chatSend").onclick=sendChat;$("chatIn").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
+function sendChat(){const v=$("chatIn").value.trim();if(!v)return;$("chatIn").value="";chatPush(v,true);
+ setTimeout(()=>chatPush("Спасибо за обращение! Оператор ответит в течение пары минут. 💬"),700)}
+
+/* ---------- misc buttons ---------- */
+$("menuBtn").onclick=()=>$("drawer").classList.add("open");
+document.querySelectorAll("[data-toast]").forEach(b=>b.onclick=()=>toast(b.dataset.toast));
+document.querySelectorAll("[data-idea]").forEach(b=>b.onclick=()=>toast("💡 Спасибо! Форма идей скоро появится"));
+document.querySelectorAll("[data-donate]").forEach(b=>b.onclick=()=>toast("♡ Спасибо за поддержку Копейкино!"));
+document.querySelector("[data-free-all]").onclick=()=>setCat("free");
+document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".bottomnav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ const t=b.dataset.nav;if(t==="top")scrollTo({top:0,behavior:"smooth"});
+ else document.querySelector("#"+t).scrollIntoView({behavior:"smooth"})});
+
+/* footer cats */
+$("fCats").innerHTML=["biz","home","pets","beauty","cloth"].map(id=>{
+ const c=catById(id);return `<li><a href="#listings" data-fcat="${id}">${c.n}</a></li>`}).join("");
+document.querySelectorAll("[data-fcat]").forEach(a=>a.onclick=()=>setCat(a.dataset.fcat));
+
+/* cookie */
+if(!store.get("k_cookie",false))$("cookie").classList.add("open");
+$("cookieOk").onclick=()=>{store.set("k_cookie",true);$("cookie").classList.remove("open")};
+
+/* animated counters */
+function countUp(el,to){let cur=0;const step=Math.ceil(to/40);const iv=setInterval(()=>{cur+=step;
+ if(cur>=to){cur=to;clearInterval(iv)}el.textContent=cur.toLocaleString("ru-RU")},40)}
+countUp($("statAds"),128400);countUp($("statUsers"),46900);
+
+/* ---------- init ---------- */
+$("locName").textContent=city;$("locNameM").textContent=city;
+renderStories();renderCatGrid();renderCatMenu();renderCities();renderVideos();renderChips();renderAucs();renderFree();
+renderAds(true);setTimeout(()=>renderAds(),700);
+updateFavUI();refreshUser();
+</script>
+</body>
+</html>
