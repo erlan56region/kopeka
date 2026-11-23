@@ -57,6 +57,8 @@
     if (!host) return;
     const el = document.createElement('div');
     el.className = 'toast' + (kind === 'err' ? ' err' : '');
+    // ошибки объявляем сразу (role=alert), обычные сообщения — вежливо (status)
+    el.setAttribute('role', kind === 'err' ? 'alert' : 'status');
     el.textContent = text;
     const life = Number(ms) > 0 ? Number(ms) : 2600;
     host.appendChild(el);
@@ -70,27 +72,61 @@
   }
 
   /* ---- модальное окно ---- */
+  let modalOpener = null; // куда вернуть фокус после закрытия
+
   function modal({ title, body, footer, onMount }) {
     const root = document.getElementById('modal-root');
     root.innerHTML = '';
+    modalOpener = document.activeElement;
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
-      <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title || 'Диалог')}">
         <div class="modal-head"><strong>${esc(title || '')}</strong>
           <button class="icon-btn" data-close aria-label="Закрыть">${icons.x}</button></div>
         <div class="modal-body">${body || ''}</div>
         ${footer ? `<div class="modal-foot">${footer}</div>` : ''}
       </div>`;
     root.appendChild(backdrop);
-    const close = () => { root.innerHTML = ''; };
+    // Видимость проверяем через computed style: offsetParent в некоторых окружениях
+    // (и в jsdom) всегда null, из-за этого фокус не переходил в диалог.
+    const isVisible = (el) => {
+      if (el.disabled || el.hidden || el.getAttribute('aria-hidden') === 'true') return false;
+      try {
+        const st = window.getComputedStyle(el);
+        if (st.display === 'none' || st.visibility === 'hidden') return false;
+      } catch (e) {}
+      return true;
+    };
+    const focusables = () => Array.from(backdrop.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(isVisible);
+    const close = () => {
+      root.innerHTML = '';
+      document.removeEventListener('keydown', onKey);
+      // возвращаем фокус туда, откуда диалог открыли
+      if (modalOpener && modalOpener.focus) { try { modalOpener.focus(); } catch (e) {} }
+      modalOpener = null;
+    };
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop || e.target.closest('[data-close]')) close();
     });
-    document.addEventListener('keydown', function onKey(e) {
-      if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
-    });
+    function onKey(e) {
+      if (e.key === 'Escape') { close(); return; }
+      // Tab внутри диалога не должен уводить фокус на страницу под ним
+      if (e.key === 'Tab') {
+        const list = focusables();
+        if (!list.length) return;
+        const first = list[0], last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+    document.addEventListener('keydown', onKey);
     if (onMount) onMount(backdrop, close);
+    // фокус — на первое поле диалога (или на кнопку закрытия)
+    const list = focusables();
+    const input = list.find((el) => /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+    try { (input || list[0] || backdrop).focus(); } catch (e) {}
     return { close, el: backdrop };
   }
 

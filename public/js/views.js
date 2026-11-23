@@ -2,6 +2,10 @@
 (function () {
   const { esc, price, timeAgo, dateTime, clock, initials, icons, compact } = UI;
 
+  // Метка поля: связываем с контролом через for/id, иначе клик по подписи не фокусирует
+  // поле и скринридер не читает название («Имя», «Телефон», …).
+  const label = (text, id) => `<label${id ? ` for="${id}"` : ''}>${esc(text)}</label>`;
+
   const noPhoto = (title) => `
     <div class="noimg" style="background:linear-gradient(135deg,var(--primary-soft),var(--bg2));color:var(--muted)">
       <div>
@@ -91,16 +95,16 @@
           </div>
 
           <form class="card card-pad" id="filter-form" style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <div class="field" style="flex:1;min-width:150px"><label>Город</label>
-              <select class="select" name="city">
+            <div class="field" style="flex:1;min-width:150px">${label('Город', 'filter-city')}
+              <select class="select" name="city" id="filter-city">
                 <option value="">Любой</option>
                 ${meta.cities.map(c => `<option ${f.city === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
               </select>
             </div>
-            <div class="field" style="width:120px"><label>Цена от</label><input class="input" name="min" type="number" min="0" value="${esc(f.min || '')}" placeholder="0"/></div>
-            <div class="field" style="width:120px"><label>до</label><input class="input" name="max" type="number" min="0" value="${esc(f.max || '')}" placeholder="∞"/></div>
-            <div class="field" style="min-width:150px"><label>Сделка</label>
-              <select class="select" name="deal">
+            <div class="field" style="width:120px">${label('Цена от', 'filter-min')}<input class="input" name="min" id="filter-min" type="number" min="0" value="${esc(f.min || '')}" placeholder="0"/></div>
+            <div class="field" style="width:120px">${label('Цена до', 'filter-max')}<input class="input" name="max" id="filter-max" type="number" min="0" value="${esc(f.max || '')}" placeholder="∞"/></div>
+            <div class="field" style="min-width:150px">${label('Сделка', 'filter-deal')}
+              <select class="select" name="deal" id="filter-deal">
                 <option value="">Любая</option>
                 <option value="meeting" ${f.deal === 'meeting' ? 'selected' : ''}>Личная встреча</option>
                 <option value="delivery" ${f.deal === 'delivery' ? 'selected' : ''}>Доставка</option>
@@ -461,12 +465,12 @@
       <div class="page-head"><div class="page-title">Профиль</div></div>
       <form class="form" id="profile-form">
         <div class="card card-pad" style="display:flex;flex-direction:column;gap:14px">
-          <div class="field"><label>Имя</label><input class="input" name="name" value="${esc(u.name)}" required/></div>
+          <div class="field">${label('Имя', 'p-name')}<input class="input" name="name" id="p-name" value="${esc(u.name)}" required/></div>
           <div class="row">
-            <div class="field"><label>Телефон</label><input class="input" name="phone" value="${esc(u.phone)}" required/></div>
-            <div class="field"><label>Город</label><input class="input" name="city" value="${esc(u.city || '')}"/></div>
+            <div class="field">${label('Телефон', 'p-phone')}<input class="input" name="phone" id="p-phone" value="${esc(u.phone)}" required/></div>
+            <div class="field">${label('Город', 'p-city')}<input class="input" name="city" id="p-city" value="${esc(u.city || '')}"/></div>
           </div>
-          <div class="field"><label>О себе</label><textarea class="textarea" name="about" maxlength="500">${esc(u.about || '')}</textarea></div>
+          <div class="field">${label('О себе', 'p-about')}<textarea class="textarea" name="about" id="p-about" maxlength="500">${esc(u.about || '')}</textarea></div>
         </div>
         <div class="actions"><button class="btn btn-primary" type="submit">Сохранить</button>
           <a class="btn" href="/user/${esc(u.id)}" data-link>Мой профиль</a>
@@ -514,18 +518,18 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px" class="auth-grid">
         <form class="card card-pad" id="login-form" style="display:flex;flex-direction:column;gap:14px">
           <div class="card-title">У меня уже есть аккаунт</div>
-          <div class="field"><label>Телефон</label><input class="input" name="phone" value="${esc(demo.phone)}" autocomplete="tel"/></div>
-          <div class="field"><label>Пароль</label><input class="input" name="password" type="password" value="${esc(demo.password)}" autocomplete="current-password"/></div>
+          <div class="field">${label('Телефон', 'login-phone')}<input class="input" name="phone" id="login-phone" value="${esc(demo.phone)}" autocomplete="tel"/></div>
+          <div class="field">${label('Пароль', 'login-password')}<input class="input" name="password" id="login-password" type="password" value="${esc(demo.password)}" autocomplete="current-password"/></div>
           <button class="btn btn-primary" type="submit">Войти</button>
           <p class="small muted">Демо-аккаунт уже подставлен — просто нажмите «Войти».</p>
         </form>
         <form class="card card-pad" id="register-form" style="display:flex;flex-direction:column;gap:14px">
           <div class="card-title">Я новый пользователь</div>
-          <div class="field"><label>Имя</label><input class="input" name="name" placeholder="Как к вам обращаться" autocomplete="name"/></div>
-          <div class="field"><label>Телефон</label><input class="input" name="phone" placeholder="+7 999 000-00-00" autocomplete="tel"/></div>
+          <div class="field">${label('Имя', 'reg-name')}<input class="input" name="name" id="reg-name" placeholder="Как к вам обращаться" autocomplete="name"/></div>
+          <div class="field">${label('Телефон', 'reg-phone')}<input class="input" name="phone" id="reg-phone" placeholder="+7 999 000-00-00" autocomplete="tel"/></div>
           <div class="row">
-            <div class="field"><label>Пароль</label><input class="input" name="password" type="password" placeholder="минимум 6 символов" autocomplete="new-password"/></div>
-            <div class="field"><label>Город</label><input class="input" name="city" placeholder="Москва" value="Москва"/></div>
+            <div class="field">${label('Пароль', 'reg-password')}<input class="input" name="password" id="reg-password" type="password" placeholder="минимум 6 символов" autocomplete="new-password"/></div>
+            <div class="field">${label('Город', 'reg-city')}<input class="input" name="city" id="reg-city" placeholder="Москва" value="Москва"/></div>
           </div>
           <button class="btn btn-primary" type="submit">Создать аккаунт</button>
         </form>
