@@ -21,6 +21,8 @@
   function appPath() {
     let p = location.pathname || '/';
     if (BASE && (p === BASE || p.startsWith(BASE + '/'))) p = p.slice(BASE.length) || '/';
+    if (p === '/index.html') p = '/';
+    p = p.replace(/\.html$/i, ''); // /kopeka/auth.html -> /auth
     return p || '/';
   }
   function toHref(path) { return BASE + (path === '/' ? '/' : path); }

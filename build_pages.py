@@ -526,11 +526,11 @@ BASE_SCRIPT = '''<script>
 (function () {
   // GitHub Pages публикует проект в подкаталог /<repo>/: запоминаем базу путей.
   var path = location.pathname || '/';
-  // /kopeka/  |  /kopeka/index.html  ->  '/kopeka';  корень домена -> ''
-  var base = '';
+  // /kopeka/  |  /kopeka/index.html  |  /kopeka/auth.html  ->  '/kopeka';  корень домена -> ''
   var seg = path.split('/').filter(Boolean);
   if (path.charAt(path.length - 1) !== '/' && /\.[a-z0-9]+$/i.test(path)) seg.pop(); // отрезаем файл
-  if (seg.length) base = '/' + seg[0];
+  if (seg.length > 1) seg = seg.slice(0, seg.length - 1); // остаётся только первый сегмент (база)
+  var base = seg.length ? '/' + seg[0] : '';
   if (base === '/' || base === '/index.html') base = '';
   window.__BASE_PATH__ = base;
   document.addEventListener('DOMContentLoaded', function () {
