@@ -8,3 +8,8 @@ data/uploads/
 # собранная статика дублируется в корне для GitHub Pages («deploy from branch: main /»)
 node_modules/
 package-lock.json
+
+# артефакт сборки и служебные копии (не нужны в репозитории)
+pages/
+workspace-*/
+workspace-*.zip

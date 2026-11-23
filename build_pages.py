@@ -42,8 +42,26 @@ function hashPass(password) {
   }
   return 'demo$' + bytesToB64(bytes);
 }
+const TIME_FIELDS = { users: ['createdAt'], ads: ['createdAt', 'updatedAt'], chats: ['createdAt', 'updatedAt'],
+  messages: ['createdAt'], favorites: ['createdAt'], deals: ['createdAt', 'updatedAt', 'when'], reviews: ['createdAt'] };
+
+// В сборке метки времени демо хранятся как смещения от «сейчас» — так сборка
+// воспроизводима, а демо на сайте всегда выглядит свежим. Здесь переводим их в даты.
+function hydrateDemo(seed) {
+  const now = Date.now();
+  Object.keys(TIME_FIELDS).forEach((table) => {
+    (seed[table] || []).forEach((row) => {
+      TIME_FIELDS[table].forEach((field) => {
+        if (typeof row[field] === 'number') row[field] = now + row[field];
+      });
+    });
+  });
+  return seed;
+}
+
 function seedData() {
   const seed = JSON.parse(JSON.stringify(window.__KOPEIKINO_DEMO__ || { version: 1, sessions: {}, users: [], ads: [], chats: [], messages: [], favorites: [], deals: [], reviews: [] }));
+  if (window.__KOPEIKINO_DEMO_RELATIVE__) hydrateDemo(seed);
   seed.meta = { seeded: true };
   seed.users.forEach(u => { if (!u.password) u.password = hashPass('demo1234'); });
   return seed;
@@ -723,6 +741,61 @@ BANNER = '''
 '''
 
 
+# Поля с метками времени: их переводим в смещения от момента первой загрузки,
+# чтобы сборка была воспроизводимой (одинаковый index.html при каждом билде),
+# а демо на сайте всё равно выглядело свежим.
+TIME_FIELDS = {
+    'users': ('createdAt',),
+    'ads': ('createdAt', 'updatedAt'),
+    'chats': ('createdAt', 'updatedAt'),
+    'messages': ('createdAt',),
+    'favorites': ('createdAt',),
+    'deals': ('createdAt', 'updatedAt', 'when'),
+    'reviews': ('createdAt',),
+}
+ID_PREFIXES = {'users': 'u_', 'ads': 'a_', 'chats': 'c_', 'messages': 'm_', 'deals': 'd_', 'reviews': 'r_'}
+ID_FIELDS = ('id', 'ownerId', 'userId', 'adId', 'buyerId', 'sellerId', 'chatId', 'fromId', 'toId', 'dealId')
+
+
+def canonical_demo(seed_db):
+    """Убирает случайность из демо-данных: id по порядку, время — смещением от сборки."""
+    # 1) стабильные идентификаторы: u_1, a_1, c_1, ... в порядке следования
+    mapping = {}
+    for table, prefix in ID_PREFIXES.items():
+        for i, row in enumerate(seed_db.get(table) or [], start=1):
+            if isinstance(row, dict) and row.get('id'):
+                mapping[row['id']] = f'{prefix}{i}'
+    for table in list(ID_PREFIXES) + ['favorites']:
+        for row in seed_db.get(table) or []:
+            if not isinstance(row, dict):
+                continue
+            for field in ID_FIELDS:
+                if field in row and row[field] in mapping:
+                    row[field] = mapping[row[field]]
+    # 2) время: все метки — смещение относительно «сейчас» на момент первой загрузки
+    stamps = []
+    for table, fields in TIME_FIELDS.items():
+        for row in seed_db.get(table) or []:
+            for field in fields:
+                # «when» — время будущей встречи: опорой для «сейчас» быть не должно
+                if field == 'when':
+                    continue
+                if isinstance(row, dict) and isinstance(row.get(field), (int, float)):
+                    stamps.append(row[field])
+    base = max(stamps) if stamps else 0
+    for table, fields in TIME_FIELDS.items():
+        for row in seed_db.get(table) or []:
+            if not isinstance(row, dict):
+                continue
+            for field in fields:
+                if isinstance(row.get(field), (int, float)):
+                    # округляем до минуты: разница в миллисекундах между сборками
+                    # не должна менять файл
+                    offset = int(round((row[field] - base) / 60000.0)) * 60000
+                    row[field] = offset
+    return seed_db
+
+
 def build():
     css = (ROOT / 'public' / 'css' / 'app.css').read_text(encoding='utf-8')
     index_html = (ROOT / 'public' / 'index.html').read_text(encoding='utf-8')
@@ -742,8 +815,12 @@ const { load } = require(dbModulePath);
 load();
 const { seed } = require(seedPath);
 seed(true);
-const raw = fs.readFileSync(path.join(process.argv[2], 'data', 'db.json'), 'utf8');
+const dbPath = path.join(process.argv[2], 'data', 'db.json');
+const before = fs.existsSync(dbPath) ? fs.readFileSync(dbPath, 'utf8') : null;
+const raw = fs.readFileSync(dbPath, 'utf8');
 process.stdout.write(raw);
+// сборка не должна затирать рабочую базу разработчика демо-данными
+if (before !== null) fs.writeFileSync(dbPath, before);
 '''
     tmp = ROOT / '.build_seed.js'
     tmp.write_text(node_script, encoding='utf-8')
@@ -751,7 +828,7 @@ process.stdout.write(raw);
         raw = subprocess.run(['node', str(tmp), str(ROOT)], capture_output=True, check=True, text=True).stdout
     finally:
         tmp.unlink(missing_ok=True)
-    seed_db = json.loads(raw)
+    seed_db = canonical_demo(json.loads(raw))
     # в статике фото лежат рядом со страницей: /seed/... -> seed/...
     for ad in seed_db.get('ads', []):
         ad['photos'] = [p[1:] if isinstance(p, str) and p.startswith('/seed/') else p for p in ad.get('photos', [])]
@@ -769,6 +846,7 @@ process.stdout.write(raw);
     body = body.replace('</body>', f'''
 <script>
 window.__KOPEIKINO_DEMO__ = {demo};
+window.__KOPEIKINO_DEMO_RELATIVE__ = true;  // метки времени в демо — смещения от момента загрузки
 </script>
 <script>
 (function () {{
