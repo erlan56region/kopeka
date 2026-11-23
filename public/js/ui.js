@@ -50,14 +50,23 @@
   };
 
   /* ---- тосты ---- */
-  function toast(text, kind) {
+  // ms — сколько держать сообщение. Важные ошибки (например, «не удалось сохранить»)
+  // показываем дольше и разрешаем закрыть кликом, иначе их легко не заметить.
+  function toast(text, kind, ms) {
     const host = document.getElementById('toasts');
+    if (!host) return;
     const el = document.createElement('div');
     el.className = 'toast' + (kind === 'err' ? ' err' : '');
     el.textContent = text;
+    const life = Number(ms) > 0 ? Number(ms) : 2600;
     host.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 2600);
-    setTimeout(() => el.remove(), 3000);
+    if (life > 4000) {
+      el.style.cursor = 'pointer';
+      el.title = 'Нажмите, чтобы закрыть';
+      el.addEventListener('click', () => el.remove());
+    }
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, life);
+    setTimeout(() => el.remove(), life + 400);
   }
 
   /* ---- модальное окно ---- */

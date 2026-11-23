@@ -383,7 +383,9 @@
           navigate('/ad/' + r.ad.id);
         }
       } catch (err) {
-        toast(err.message, 'err');
+        // не сохранилось (нет места / хранилище недоступно) — сообщение держим дольше,
+        // фото и текст остаются в форме, можно убрать пару снимков и повторить
+        toast(err.message, 'err', err.status === 507 ? 12000 : 4000);
         submit.disabled = false;
         submit.textContent = 'Сохранить';
       }

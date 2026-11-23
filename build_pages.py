@@ -120,12 +120,18 @@ async function storageInfo() {
 
 // Сохранение: пишем в память сразу, на диск — по цепочке (чтобы не гонялись записи).
 // Возвращаем промис с ошибкой записи (если она случится), но не «залипаем» ею для чтения.
-function writeData(d) {
+let pendingSnapshot = null;   // что уже отправлено на запись
+
+function writeData(d, force) {
   memData = d;
   const snapshot = JSON.stringify(d);
+  // Одинаковые снимки подряд второй раз не пишем: частые GET-чтения (просмотры,
+  // прочитанность) не должны гонять мегабайты в IndexedDB на каждый переход.
+  if (!force && snapshot === pendingSnapshot) return persistChain;
+  pendingSnapshot = snapshot;
   const task = persistChain.then(() => idbPut(snapshot)).then(
     () => { return true; },
-    (err) => { console.error('Не удалось сохранить данные:', err); throw err; }
+    (err) => { pendingSnapshot = null; console.error('Не удалось сохранить данные:', err); throw err; }
   );
   persistChain = task.catch(() => {}); // цепочка продолжается даже после ошибки
   return task;
@@ -149,7 +155,7 @@ async function initStore() {
     } else {
       memData = seedData();
     }
-    writeData(memData);
+    writeData(memData, true);
   }
   return memData;
 }
@@ -592,20 +598,24 @@ window.API = {
   post(path, body) {
     try {
       const b = body || {};
-      if (path === '/api/auth/login') return Promise.resolve(respondRead(d => repo.login(d, b)));
-      if (path === '/api/auth/register') return Promise.resolve(respondRead(d => repo.register(d, b)));
-      if (path === '/api/auth/logout') return Promise.resolve(respond(() => repo.logout()));
-      if (path === '/api/ads') return Promise.resolve(respondRead(d => repo.createAd(d, b)));
+      // Всё, что меняет данные, идёт через respond(): успех — только после записи на диск.
+      // respondRead оставлен только для чтения и для операций, которые ничего не меняют.
+      // Сессия живёт в localStorage, логин/регистрацию/выход сохранять в IndexedDB нечего —
+      // отвечаем сразу, иначе на переполненном хранилище нельзя было бы даже войти.
+      if (path === '/api/auth/login') return Promise.resolve(repo.login(readData(), b));
+      if (path === '/api/auth/register') return Promise.resolve(repo.register(readData(), b));
+      if (path === '/api/auth/logout') return Promise.resolve(repo.logout());
+      if (path === '/api/ads') return Promise.resolve(respond(d => repo.createAd(d, b)));
       const fav = /^\/api\/ads\/([^/]+)\/favorite$/.exec(path);
-      if (fav) return Promise.resolve(respondRead(d => repo.toggleFavorite(d, decodeURIComponent(fav[1]))));
-      if (path === '/api/chats') return Promise.resolve(respondRead(d => repo.createChat(d, b)));
+      if (fav) return Promise.resolve(respond(d => repo.toggleFavorite(d, decodeURIComponent(fav[1]))));
+      if (path === '/api/chats') return Promise.resolve(respond(d => repo.createChat(d, b)));
       const msg = /^\/api\/chats\/([^/]+)\/messages$/.exec(path);
-      if (msg) return Promise.resolve(respondRead(d => repo.sendMessage(d, decodeURIComponent(msg[1]), b)));
+      if (msg) return Promise.resolve(respond(d => repo.sendMessage(d, decodeURIComponent(msg[1]), b)));
       const dl = /^\/api\/chats\/([^/]+)\/deals$/.exec(path);
-      if (dl) return Promise.resolve(respondRead(d => repo.createDeal(d, decodeURIComponent(dl[1]), b)));
+      if (dl) return Promise.resolve(respond(d => repo.createDeal(d, decodeURIComponent(dl[1]), b)));
       const st = /^\/api\/deals\/([^/]+)\/status$/.exec(path);
-      if (st) return Promise.resolve(respondRead(d => repo.dealStatus(d, decodeURIComponent(st[1]), b)));
-      if (path === '/api/reviews') return Promise.resolve(respondRead(d => repo.review(d, b)));
+      if (st) return Promise.resolve(respond(d => repo.dealStatus(d, decodeURIComponent(st[1]), b)));
+      if (path === '/api/reviews') return Promise.resolve(respond(d => repo.review(d, b)));
       return Promise.reject(new Error('Неизвестный запрос: ' + path));
     } catch (e) { return Promise.reject(e); }
   },
