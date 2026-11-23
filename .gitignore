@@ -6,3 +6,5 @@ data/uploads/
 .DS_Store
 
 # собранная статика дублируется в корне для GitHub Pages («deploy from branch: main /»)
+node_modules/
+package-lock.json

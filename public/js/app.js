@@ -24,6 +24,13 @@
     return p || '/';
   }
   function toHref(path) { return BASE + (path === '/' ? '/' : path); }
+  // href мог уже получить префикс базы (серверная разметка или script в Pages-сборке)
+  function stripBase(href) {
+    if (!BASE) return href;
+    if (href === BASE) return '/';
+    if (href.startsWith(BASE + '/')) return href.slice(BASE.length);
+    return href;
+  }
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
   /* ---------------- навигация ---------------- */
@@ -37,7 +44,8 @@
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a[data-link]');
     if (link && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
-      const href = link.getAttribute('href');
+      const raw = link.getAttribute('href') || '';
+      const href = stripBase(raw);
       if (href && href.startsWith('/')) {
         e.preventDefault();
         navigate(href);
@@ -476,12 +484,14 @@
 
   /* ---- сделки ---- */
   async function renderDeals() {
+    if (!state.me) { app.innerHTML = Views.loginRequired('Войдите, чтобы видеть свои сделки.'); return; }
     const r = await API.get('/api/deals');
     app.innerHTML = Views.deals({ me: state.me, deals: r.items });
   }
 
   /* ---- избранное ---- */
   async function renderFavorites() {
+    if (!state.me) { app.innerHTML = Views.loginRequired('Войдите, чтобы сохранять объявления в избранное.'); return; }
     const r = await API.get('/api/favorites');
     app.innerHTML = Views.favorites({ me: state.me, favorites: r.items });
     bindFavButtons();
