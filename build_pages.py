@@ -42,27 +42,118 @@ function hashPass(password) {
   }
   return 'demo$' + bytesToB64(bytes);
 }
+function seedData() {
+  const seed = JSON.parse(JSON.stringify(window.__KOPEIKINO_DEMO__ || { version: 1, sessions: {}, users: [], ads: [], chats: [], messages: [], favorites: [], deals: [], reviews: [] }));
+  seed.meta = { seeded: true };
+  seed.users.forEach(u => { if (!u.password) u.password = hashPass('demo1234'); });
+  return seed;
+}
+
+// Данные жили в localStorage, но там всего ~5 МБ: несколько фото — и сохранение
+// молча падало (объявление «исчезало» после перезагрузки). Переходим на IndexedDB:
+// она вмещает сотни мегабайт и не блокирует интерфейс.
+const IDB_NAME = 'kopeikino';
+const IDB_STORE = 'state';
+const IDB_KEY = 'data';
+let memData = null;      // рабочая копия в памяти (синхронное чтение)
+let idb = null;          // открытая база
+let persistChain = Promise.resolve();
+let lastPersistError = null;
+
+function openIdb() {
+  if (idb) return Promise.resolve(idb);
+  return new Promise((resolve) => {
+    let req;
+    try { req = indexedDB.open(IDB_NAME, 1); } catch (e) { return resolve(null); }
+    if (!req) return resolve(null);
+    req.onupgradeneeded = () => { try { req.result.createObjectStore(IDB_STORE); } catch (e) {} };
+    req.onsuccess = () => { idb = req.result; resolve(idb); };
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
+}
+
+function idbGet() {
+  return openIdb().then((db) => {
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(IDB_KEY);
+        tx.onsuccess = () => resolve(tx.result || null);
+        tx.onerror = () => resolve(null);
+      } catch (e) { resolve(null); }
+    });
+  });
+}
+
+function idbPut(value) {
+  return openIdb().then((db) => {
+    if (!db) throw new Error('no-idb');
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, IDB_KEY);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error || new Error('save-failed'));
+        tx.onabort = () => reject(tx.error || new Error('save-aborted'));
+      } catch (e) { reject(e); }
+    });
+  });
+}
+
+// Синхронное чтение всегда из памяти; память наполняется при старте (initStore)
 function readData() {
-  let raw = null;
-  try { raw = localStorage.getItem(DATA_KEY); } catch (e) { raw = null; }
-  if (!raw) {
-    const seed = JSON.parse(JSON.stringify(window.__KOPEIKINO_DEMO__ || { version: 1, sessions: {}, users: [], ads: [], chats: [], messages: [], favorites: [], deals: [], reviews: [] }));
-    seed.meta = { seeded: true };
-    seed.users.forEach(u => { if (!u.password) u.password = hashPass('demo1234'); });
-    writeData(seed);
-    return seed;
-  }
-  try { return JSON.parse(raw); } catch (e) {
-    const fresh = JSON.parse(JSON.stringify(window.__KOPEIKINO_DEMO__));
-    fresh.meta = { seeded: true };
-    fresh.users.forEach(u => { if (!u.password) u.password = hashPass('demo1234'); });
-    writeData(fresh);
-    return fresh;
-  }
+  if (!memData) memData = seedData();
+  return memData;
 }
+
+// Сколько примерно свободно в хранилище (если браузер умеет рассказать)
+async function storageInfo() {
+  try {
+    if (navigator.storage && navigator.storage.estimate) {
+      const e = await navigator.storage.estimate();
+      return { usage: e.usage || 0, quota: e.quota || 0 };
+    }
+  } catch (e) {}
+  return { usage: 0, quota: 0 };
+}
+
+// Сохранение: пишем в память сразу, на диск — по цепочке (чтобы не гонялись записи).
+// Возвращаем промис с ошибкой записи (если она случится), но не «залипаем» ею для чтения.
 function writeData(d) {
-  try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch (e) { console.warn('Не удалось сохранить данные', e); }
+  memData = d;
+  const snapshot = JSON.stringify(d);
+  const task = persistChain.then(() => idbPut(snapshot)).then(
+    () => { return true; },
+    (err) => { console.error('Не удалось сохранить данные:', err); throw err; }
+  );
+  persistChain = task.catch(() => {}); // цепочка продолжается даже после ошибки
+  return task;
 }
+
+// Ждём, пока все записи доедут до IndexedDB (нужно перед перезагрузкой)
+function flushData() { return persistChain.catch(() => {}); }
+
+async function initStore() {
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
+  const stored = await idbGet();
+  if (stored) {
+    try { memData = JSON.parse(stored); } catch (e) { memData = seedData(); }
+  } else {
+    // миграция со старой версии на localStorage (если там что-то есть)
+    let legacy = null;
+    try { legacy = localStorage.getItem('kopeikino:data:v1'); } catch (e) {}
+    if (legacy) {
+      try { memData = JSON.parse(legacy); } catch (e) { memData = seedData(); }
+      try { localStorage.removeItem('kopeikino:data:v1'); } catch (e) {}
+    } else {
+      memData = seedData();
+    }
+    writeData(memData);
+  }
+  return memData;
+}
+
 function getSession() { try { return localStorage.getItem(SESSION_KEY); } catch (e) { return null; } }
 function setSession(id) { try { localStorage.setItem(SESSION_KEY, id || ''); } catch (e) {} }
 
@@ -433,12 +524,49 @@ const META = {
   static: true,
 };
 
-function respond(fn) {
+async function respondAsync(fn) {
   const d = readData();
-  const result = fn(d);
-  writeData(d);
+  const backup = JSON.stringify(d);
+  let result;
+  try {
+    result = fn(d);
+  } catch (e) {
+    try { Object.assign(d, JSON.parse(backup)); } catch (err) {}
+    throw e;
+  }
+  // Сохраняем и ждём завершения записи: иначе объявление «создалось» и пропадёт после перезагрузки
+  let saveError = null;
+  try {
+    await writeData(d);
+  } catch (e) {
+    saveError = e;
+  }
+  if (saveError) {
+    try { Object.assign(d, JSON.parse(backup)); } catch (err) {}
+    const hint = saveError && /quota/i.test(String(saveError.name || saveError.message))
+      ? 'В браузере закончилось место — удалите лишние фотографии или объявления.'
+      : 'Хранилище браузера недоступно (например, режим инкогнито). Данные не сохранены.';
+    const err = new Error('Не удалось сохранить изменения. ' + hint);
+    err.status = 507;
+    throw err;
+  }
   return result;
 }
+
+function respond(fn) { return respondAsync(fn); }
+
+// Для GET: данные меняются (просмотры, прочитанность), но если запись не удалась —
+// это не повод ломать чтение. Интерфейс должен работать даже в режиме инкогнито.
+async function respondRead(fn) {
+  const d = readData();
+  const result = fn(d);
+  try { await writeData(d); } catch (e) { console.warn('Данные показаны, но не сохранены:', e && e.message); }
+  return result;
+}
+
+// До готовности IndexedDB API отвечает «загрузка» — интерфейс этого не увидит,
+// потому что app.js ждёт window.__STORE_READY__ (см. app.js)
+let storeReady = false;
 
 window.API = {
   get(path, params) {
@@ -450,34 +578,34 @@ window.API = {
             cities: [...new Set(d.ads.filter(a => a.status === 'active').map(a => a.city))].sort() };
         })()));
       }
-      if (path === '/api/me') return Promise.resolve(respond(d => repo.me(d)));
-      if (path === '/api/ads') return Promise.resolve(respond(d => repo.searchAds(d, params || {})));
-      if (path.startsWith('/api/ads/')) return Promise.resolve(respond(d => repo.getAd(d, decodeURIComponent(path.slice('/api/ads/'.length)))));
-      if (path === '/api/favorites') return Promise.resolve(respond(d => repo.favorites(d)));
-      if (path === '/api/chats') return Promise.resolve(respond(d => repo.chats(d)));
-      if (path.startsWith('/api/chats/')) return Promise.resolve(respond(d => repo.chatMessages(d, decodeURIComponent(path.split('/')[3]))));
-      if (path === '/api/deals') return Promise.resolve(respond(d => repo.deals(d)));
-      if (path.startsWith('/api/users/')) return Promise.resolve(respond(d => repo.user(d, decodeURIComponent(path.slice('/api/users/'.length)))));
+      if (path === '/api/me') return Promise.resolve(respondRead(d => repo.me(d)));
+      if (path === '/api/ads') return Promise.resolve(respondRead(d => repo.searchAds(d, params || {})));
+      if (path.startsWith('/api/ads/')) return Promise.resolve(respondRead(d => repo.getAd(d, decodeURIComponent(path.slice('/api/ads/'.length)))));
+      if (path === '/api/favorites') return Promise.resolve(respondRead(d => repo.favorites(d)));
+      if (path === '/api/chats') return Promise.resolve(respondRead(d => repo.chats(d)));
+      if (path.startsWith('/api/chats/')) return Promise.resolve(respondRead(d => repo.chatMessages(d, decodeURIComponent(path.split('/')[3]))));
+      if (path === '/api/deals') return Promise.resolve(respondRead(d => repo.deals(d)));
+      if (path.startsWith('/api/users/')) return Promise.resolve(respondRead(d => repo.user(d, decodeURIComponent(path.slice('/api/users/'.length)))));
       return Promise.reject(new Error('Неизвестный запрос: ' + path));
     } catch (e) { return Promise.reject(e); }
   },
   post(path, body) {
     try {
       const b = body || {};
-      if (path === '/api/auth/login') return Promise.resolve(respond(d => repo.login(d, b)));
-      if (path === '/api/auth/register') return Promise.resolve(respond(d => repo.register(d, b)));
+      if (path === '/api/auth/login') return Promise.resolve(respondRead(d => repo.login(d, b)));
+      if (path === '/api/auth/register') return Promise.resolve(respondRead(d => repo.register(d, b)));
       if (path === '/api/auth/logout') return Promise.resolve(respond(() => repo.logout()));
-      if (path === '/api/ads') return Promise.resolve(respond(d => repo.createAd(d, b)));
+      if (path === '/api/ads') return Promise.resolve(respondRead(d => repo.createAd(d, b)));
       const fav = /^\/api\/ads\/([^/]+)\/favorite$/.exec(path);
-      if (fav) return Promise.resolve(respond(d => repo.toggleFavorite(d, decodeURIComponent(fav[1]))));
-      if (path === '/api/chats') return Promise.resolve(respond(d => repo.createChat(d, b)));
+      if (fav) return Promise.resolve(respondRead(d => repo.toggleFavorite(d, decodeURIComponent(fav[1]))));
+      if (path === '/api/chats') return Promise.resolve(respondRead(d => repo.createChat(d, b)));
       const msg = /^\/api\/chats\/([^/]+)\/messages$/.exec(path);
-      if (msg) return Promise.resolve(respond(d => repo.sendMessage(d, decodeURIComponent(msg[1]), b)));
+      if (msg) return Promise.resolve(respondRead(d => repo.sendMessage(d, decodeURIComponent(msg[1]), b)));
       const dl = /^\/api\/chats\/([^/]+)\/deals$/.exec(path);
-      if (dl) return Promise.resolve(respond(d => repo.createDeal(d, decodeURIComponent(dl[1]), b)));
+      if (dl) return Promise.resolve(respondRead(d => repo.createDeal(d, decodeURIComponent(dl[1]), b)));
       const st = /^\/api\/deals\/([^/]+)\/status$/.exec(path);
-      if (st) return Promise.resolve(respond(d => repo.dealStatus(d, decodeURIComponent(st[1]), b)));
-      if (path === '/api/reviews') return Promise.resolve(respond(d => repo.review(d, b)));
+      if (st) return Promise.resolve(respondRead(d => repo.dealStatus(d, decodeURIComponent(st[1]), b)));
+      if (path === '/api/reviews') return Promise.resolve(respondRead(d => repo.review(d, b)));
       return Promise.reject(new Error('Неизвестный запрос: ' + path));
     } catch (e) { return Promise.reject(e); }
   },
@@ -611,10 +739,17 @@ window.__KOPEIKINO_DEMO__ = {demo};
   const DEAL_TYPES = {{ meet: 'Личная встреча', delivery: 'Доставка', transfer: 'Перевозка' }};
   const DEAL_STATUS = {{ proposed: 'Предложена', confirmed: 'Подтверждена', declined: 'Отклонена', done: 'Завершена', canceled: 'Отменена' }};
   {STORE}
+  window.__STORE_READY__ = initStore().catch((e) => {{ console.error('Хранилище', e); return null; }});
   const btn = document.getElementById('reset-demo');
-  if (btn) btn.onclick = () => {{
+  if (btn) btn.onclick = async () => {{
     if (!confirm('Вернуть демо-объявления, чат и сделки? Ваши локальные изменения пропадут.')) return;
     try {{ localStorage.removeItem('kopeikino:data:v1'); localStorage.removeItem('kopeikino:session:v1'); }} catch (e) {{}}
+    try {{
+      if (window.indexedDB) {{
+        const del = indexedDB.deleteDatabase('kopeikino');
+        await new Promise((resolve) => {{ del.onsuccess = del.onerror = del.onblocked = resolve; setTimeout(resolve, 1200); }});
+      }}
+    }} catch (e) {{}}
     location.reload();
   }};
 }})();

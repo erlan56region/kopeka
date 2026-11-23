@@ -634,6 +634,10 @@
   /* ---------------- старт ---------------- */
   UI.initTheme();
   (async () => {
+    // на статической версии (GitHub Pages) данные лежат в IndexedDB — ждём загрузки
+    if (window.__STORE_READY__ && typeof window.__STORE_READY__.then === 'function') {
+      try { await window.__STORE_READY__; } catch (e) {}
+    }
     await render();
     connectEvents();
   })();

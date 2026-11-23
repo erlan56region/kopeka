@@ -127,7 +127,7 @@
   }
 
   /* ---- ресайз картинки перед загрузкой (экономим трафик) ---- */
-  async function compressImage(file, maxSide = 1280, quality = 0.82) {
+  async function compressImage(file, maxSide = 1100, quality = 0.78) {
     if (!/^image\//.test(file.type) || /gif$/.test(file.type)) return readFileAsDataUrl(file);
     const dataUrl = await readFileAsDataUrl(file);
     const img = await new Promise((resolve, reject) => {
