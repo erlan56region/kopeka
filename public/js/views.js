@@ -526,10 +526,12 @@
     </div></div>`;
   }
 
-  function notFound() {
+  // detail — уточнение от сервера/хранилища («Объявление не найдено», «Чат не найден»)
+  function notFound(detail) {
+    const hint = detail && !/^страница/i.test(detail) ? esc(detail) + '. ' : '';
     return `<div class="container"><div class="empty" style="max-width:560px;margin:40px auto">
       <h3 style="margin-bottom:8px">Страница не найдена</h3>
-      <p style="margin-bottom:16px">Возможно, объявление снято с публикации.</p>
+      <p style="margin-bottom:16px">${hint}Возможно, объявление снято с публикации или ссылка устарела.</p>
       <a class="btn btn-primary" href="/" data-link>На главную</a>
     </div></div>`;
   }

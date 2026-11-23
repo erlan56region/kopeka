@@ -756,8 +756,11 @@ window.__KOPEIKINO_DEMO__ = {demo};
     try {{ localStorage.removeItem('kopeikino:data:v1'); localStorage.removeItem('kopeikino:session:v1'); }} catch (e) {{}}
     try {{
       if (window.indexedDB) {{
+        // открытую базу нужно закрыть, иначе удаление повиснет в состоянии blocked
+        try {{ if (idb && idb.close) idb.close(); }} catch (e) {{}}
+        idb = null; memData = null; persistChain = Promise.resolve(); pendingSnapshot = null;
         const del = indexedDB.deleteDatabase('kopeikino');
-        await new Promise((resolve) => {{ del.onsuccess = del.onerror = del.onblocked = resolve; setTimeout(resolve, 1200); }});
+        await new Promise((resolve) => {{ del.onsuccess = del.onerror = del.onblocked = resolve; setTimeout(resolve, 1500); }});
       }}
     }} catch (e) {{}}
     location.reload();

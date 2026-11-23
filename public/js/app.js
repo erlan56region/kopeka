@@ -189,6 +189,12 @@
 
       app.innerHTML = Views.notFound();
     } catch (e) {
+      // 404 по адресу (снятое объявление, чужой чат) — это не поломка приложения:
+      // показываем понятный экран с переходом на главную, а не «Ошибка: …»
+      if (e && (e.status === 404 || /не найдено|не найден/i.test(e.message || ''))) {
+        app.innerHTML = Views.notFound(e.message);
+        return;
+      }
       console.error(e);
       app.innerHTML = `<div class="container"><div class="empty">Ошибка: ${esc(e.message)}</div></div>`;
     }
