@@ -649,6 +649,8 @@ window.__KOPEIKINO_DEMO__ = {demo};
     # нужен в корне репозитория: именно его отдаёт https://<user>.github.io/<repo>/
     (ROOT / 'index.html').write_text(body, encoding='utf-8')
     (ROOT / '.nojekyll').write_text('', encoding='utf-8')
+    # Pages отдаёт 404.html на неизвестные пути — это спасает прямые ссылки /ad/<id>
+    (ROOT / '404.html').write_text(body, encoding='utf-8')
 
     # 404.html: при клиентской навигации не нужен, но спасает прямые ссылки вида /ad/xxx
     depth = body.count('/')
