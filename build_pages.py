@@ -57,19 +57,34 @@ const IDB_STORE = 'state';
 const IDB_KEY = 'data';
 let memData = null;      // рабочая копия в памяти (синхронное чтение)
 let idb = null;          // открытая база
+let idbFailedAt = 0;     // когда IndexedDB отказала (чтобы не ждать её на каждой операции)
 let persistChain = Promise.resolve();
 let lastPersistError = null;
 
+// Если хранилище недоступно, повторяем попытку не чаще раза в 30 секунд:
+// иначе каждая операция снова ждала бы таймаут, и страница «висела» бы на скелетоне.
+const IDB_RETRY_MS = 30000;
+
 function openIdb() {
   if (idb) return Promise.resolve(idb);
+  if (idbFailedAt && Date.now() - idbFailedAt < IDB_RETRY_MS) return Promise.resolve(null);
   return new Promise((resolve) => {
+    let done = false;
+    const finish = (db) => {
+      if (done) return; done = true;
+      if (!db) idbFailedAt = Date.now();
+      resolve(db);
+    };
     let req;
-    try { req = indexedDB.open(IDB_NAME, 1); } catch (e) { return resolve(null); }
-    if (!req) return resolve(null);
+    try { req = indexedDB.open(IDB_NAME, 1); } catch (e) { return finish(null); }
+    if (!req) return finish(null);
+    // Страховка: в части браузеров (жёсткая приватность, встроенные браузеры мессенджеров,
+    // webview) запрос может вообще не ответить — без таймаута страница осталась бы пустой.
+    setTimeout(() => finish(null), 1500);
     req.onupgradeneeded = () => { try { req.result.createObjectStore(IDB_STORE); } catch (e) {} };
-    req.onsuccess = () => { idb = req.result; resolve(idb); };
-    req.onerror = () => resolve(null);
-    req.onblocked = () => resolve(null);
+    req.onsuccess = () => { idb = req.result; idbFailedAt = 0; finish(idb); };
+    req.onerror = () => finish(null);
+    req.onblocked = () => finish(null);
   });
 }
 
@@ -566,6 +581,8 @@ function respond(fn) { return respondAsync(fn); }
 async function respondRead(fn) {
   const d = readData();
   const result = fn(d);
+  // Если хранилище недоступно, писать некуда — отдаём данные сразу, без ожидания таймаутов.
+  if (idbFailedAt && !idb) return result;
   try { await writeData(d); } catch (e) { console.warn('Данные показаны, но не сохранены:', e && e.message); }
   return result;
 }
@@ -758,7 +775,7 @@ window.__KOPEIKINO_DEMO__ = {demo};
       if (window.indexedDB) {{
         // открытую базу нужно закрыть, иначе удаление повиснет в состоянии blocked
         try {{ if (idb && idb.close) idb.close(); }} catch (e) {{}}
-        idb = null; memData = null; persistChain = Promise.resolve(); pendingSnapshot = null;
+        idb = null; idbFailedAt = 0; memData = null; persistChain = Promise.resolve(); pendingSnapshot = null;
         const del = indexedDB.deleteDatabase('kopeikino');
         await new Promise((resolve) => {{ del.onsuccess = del.onerror = del.onblocked = resolve; setTimeout(resolve, 1500); }});
       }}

@@ -642,11 +642,25 @@
   /* ---------------- старт ---------------- */
   UI.initTheme();
   (async () => {
-    // на статической версии (GitHub Pages) данные лежат в IndexedDB — ждём загрузки
+    // на статической версии (GitHub Pages) данные лежат в IndexedDB — ждём загрузки.
+    // Но не бесконечно: если хранилище молчит, показываем интерфейс из демо-данных,
+    // а не оставляем пустую страницу.
     if (window.__STORE_READY__ && typeof window.__STORE_READY__.then === 'function') {
-      try { await window.__STORE_READY__; } catch (e) {}
+      try {
+        await Promise.race([
+          Promise.resolve(window.__STORE_READY__),
+          new Promise((resolve) => setTimeout(resolve, 2500)),
+        ]);
+      } catch (e) {}
     }
-    await render();
+    try {
+      await render();
+    } catch (e) {
+      console.error(e);
+      app.innerHTML = `<div class="container"><div class="empty">Не удалось загрузить объявления. <a href="" data-retry style="color:var(--primary)">Обновить страницу</a></div></div>`;
+      const retry = document.querySelector('[data-retry]');
+      if (retry) retry.onclick = (ev) => { ev.preventDefault(); location.reload(); };
+    }
     connectEvents();
   })();
 })();
