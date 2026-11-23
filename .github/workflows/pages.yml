@@ -1,4 +1,6 @@
-# Публикация статического сайта на GitHub Pages
+# Публикация статической версии страницы на GitHub Pages.
+# Полноценный маркетплейс (объявления + чат + сделки) — это Node.js-приложение:
+# запуск локально/на сервере: npm start  →  http://localhost:8000
 name: Deploy static content to Pages
 
 on:
@@ -24,13 +26,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Подготовить статическую страницу
+        run: |
+          mkdir -p _site
+          cp pages-site.html _site/index.html
+          touch _site/.nojekyll
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Публикуем только собранную страницу, без служебных файлов/архива
-          path: '.'
+          path: '_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

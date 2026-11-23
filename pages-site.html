@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Копейкино — маркетплейс: как запустить</title>
+<meta name="description" content="Копейкино: объявления, чат и сделки. Полноценное приложение на Node.js — инструкция по запуску и описание возможностей."/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%2316a34a'/%3E%3Ctext x='50' y='70' font-size='58' font-weight='bold' text-anchor='middle' fill='%23fff'%3E%D0%9A%3C/text%3E%3C/svg%3E"/>
+<style>
+  :root{--bg:#fff;--bg2:#f4f4f5;--text:#09090b;--muted:#71717a;--border:#e4e4e7;--primary:#16a34a;--soft:rgba(22,163,74,.1);--radius:18px}
+  @media (prefers-color-scheme: dark){:root{--bg:#09090b;--bg2:#18181b;--text:#fafafa;--muted:#a1a1aa;--border:#27272a}}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55;font-size:16px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 64px}
+  header{padding:44px 0 28px}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .coin{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#fff;background:conic-gradient(from 210deg,#86efac,var(--primary),#bbf7d0,var(--primary),#86efac);box-shadow:inset 0 0 0 3px rgba(255,255,255,.35),0 4px 12px rgba(22,163,74,.35)}
+  .brand b{font-size:19px;display:block;line-height:1.1}
+  .brand small{color:var(--muted);font-size:12px}
+  h1{font-size:36px;line-height:1.15;letter-spacing:-.03em;margin-bottom:14px}
+  .lead{color:var(--muted);font-size:17px;max-width:680px}
+  .hero{background:linear-gradient(120deg,var(--soft),transparent 70%);border:1px solid var(--border);border-radius:22px;padding:28px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:inherit;text-decoration:none;font-weight:600}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px}
+  .card{border:1px solid var(--border);border-radius:var(--radius);padding:18px;background:var(--bg)}
+  .card h3{font-size:16px;margin-bottom:6px}
+  .card p{color:var(--muted);font-size:14.5px}
+  h2{font-size:22px;letter-spacing:-.02em;margin:40px 0 6px}
+  .muted{color:var(--muted)}
+  pre{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;overflow:auto;font-size:13.5px;line-height:1.6}
+  code{background:var(--bg2);padding:1px 5px;border-radius:6px;font-size:.92em}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.03em}
+  .note{border-left:3px solid var(--primary);background:var(--soft);padding:12px 16px;border-radius:10px;margin-top:14px;font-size:14.5px}
+  ul{margin:8px 0 0 20px;color:var(--muted);font-size:14.5px}
+  li{margin:4px 0}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="coin">К</div><div><b>Копейкино</b><small>доска объявлений · маркетплейс</small></div></div>
+    <div class="hero">
+      <h1>Продавайте, переписывайтесь и договаривайтесь о встрече</h1>
+      <p class="lead">
+        Рабочий маркетплейс в духе Авито: объявления с фотографиями, поиск и фильтры, избранное,
+        переписка в реальном времени и сделки — личная встреча, доставка или перевозка.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/erlan56region/kopeka#readme">Открыть README и запустить</a>
+        <a class="btn" href="https://github.com/erlan56region/kopeka">Исходный код</a>
+      </div>
+      <div class="note">
+        Эта страница на GitHub Pages — статический хостинг: здесь не работают серверные функции.
+        Сам маркетплейс — Node.js-приложение: <code>npm start</code> → <code>http://localhost:8000</code>.
+      </div>
+    </div>
+  </header>
+
+  <h2>Что умеет</h2>
+  <div class="grid">
+    <div class="card"><h3>Объявления</h3><p>До 8 фото на объявление (сжатие в браузере), категории, состояние, город и метро, цена, описание. Публикация, редактирование и снятие с продажи.</p></div>
+    <div class="card"><h3>Поиск и фильтры</h3><p>Поиск по тексту, категория, город, диапазон цен, сортировка по цене/новизне/просмотрам, фильтр по способу сделки.</p></div>
+    <div class="card"><h3>Чат с продавцом</h3><p>Диалоги привязаны к объявлению, новые сообщения приходят мгновенно (SSE), есть счётчик непрочитанных.</p></div>
+    <div class="card"><h3>Сделки</h3><p>В чате одной кнопкой предлагается <b>личная встреча</b>, <b>доставка</b> или <b>перевозка</b>: место, время, цена, комментарий. Вторая сторона подтверждает или отклоняет, затем сделка завершается.</p></div>
+    <div class="card"><h3>Избранное и профили</h3><p>Сохранение объявлений, страницы продавцов, отзывы и рейтинг после сделки.</p></div>
+    <div class="card"><h3>Аккаунты</h3><p>Регистрация по телефону, пароли — PBKDF2-SHA256 (120 000 итераций), сессии в HttpOnly-cookie.</p></div>
+  </div>
+
+  <h2>Быстрый запуск</h2>
+  <pre>git clone https://github.com/erlan56region/kopeka.git
+cd kopeka
+npm start            # http://localhost:8000
+# внешних зависимостей нет, нужен только Node.js 18+
+
+# демо-аккаунт:
+#   телефон: +7 999 000-00-01
+#   пароль:  demo1234
+
+# пересеять демо-данные:
+npm start -- --force-seed</pre>
+
+  <h2>Как устроено</h2>
+  <table>
+    <tr><th>Слой</th><th>Технологии</th></tr>
+    <tr><td>Сервер</td><td>Node.js, модуль <code>http</code>, JSON REST API, SSE для событий чата</td></tr>
+    <tr><td>Хранилище</td><td>JSON-файл <code>data/db.json</code> + загруженные фото в <code>data/uploads/</code></td></tr>
+    <tr><td>Клиент</td><td>Чистый JavaScript (без фреймворков), SPA-роутер на History API, адаптивная вёрстка</td></tr>
+  </table>
+
+  <h2>API</h2>
+  <table>
+    <tr><th>Метод</th><th>Описание</th></tr>
+    <tr><td><code>GET /api/ads?q=&amp;category=&amp;city=&amp;min=&amp;max=&amp;deal=&amp;sort=</code></td><td>Поиск объявлений</td></tr>
+    <tr><td><code>POST /api/ads</code></td><td>Создать объявление (фото — dataURL)</td></tr>
+    <tr><td><code>POST /api/ads/:id/favorite</code></td><td>Добавить/убрать из избранного</td></tr>
+    <tr><td><code>POST /api/chats</code></td><td>Открыть чат по объявлению</td></tr>
+    <tr><td><code>GET/POST /api/chats/:id/messages</code></td><td>История и отправка сообщений</td></tr>
+    <tr><td><code>POST /api/chats/:id/deals</code></td><td>Предложить встречу, доставку или перевозку</td></tr>
+    <tr><td><code>POST /api/deals/:id/status</code></td><td>Подтвердить / отклонить / завершить сделку</td></tr>
+    <tr><td><code>GET /api/events</code></td><td>SSE-поток событий (новые сообщения и сделки)</td></tr>
+  </table>
+
+  <h2>Ограничения демо</h2>
+  <ul>
+    <li>Данные локальные: диск сервера, без внешней БД — для настоящего продакшена нужны PostgreSQL/Redis и файловое хранилище (S3).</li>
+    <li>Нет платежей, SMS-подтверждения телефона и модерации — их можно добавить отдельным этапом.</li>
+    <li>GitHub Pages умеет только статику, поэтому на нём размещена эта страница, а не сам маркетплейс.</li>
+  </ul>
+
+  <footer>Копейкино · демо-маркетплейс · код открыт в репозитории <a href="https://github.com/erlan56region/kopeka" style="color:var(--primary)">erlan56region/kopeka</a></footer>
+</div>
+</body>
+</html>
