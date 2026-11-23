@@ -162,6 +162,12 @@
   async function render(silent) {
     const path = appPath();
     const params = new URLSearchParams(location.search);
+    // если пользователь пришёл по прямому адресу файла (/kopeka/chats.html),
+    // чистим адрес — при перезагрузке не будет лишней задержки из-за 404-фолбэка
+    if (/\.html$/i.test(location.pathname) && !silent) {
+      const cleanRoute = toHref(path) + location.search;
+      try { history.replaceState({}, '', cleanRoute); } catch (e) {}
+    }
 
     try {
       await loadMe();
