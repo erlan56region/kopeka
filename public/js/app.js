@@ -268,10 +268,12 @@
 
     const del = $('[data-delete-ad]');
     if (del) del.onclick = async () => {
-      if (!(await confirmDialog('Снять объявление?', 'Объявление перестанет показываться в поиске.'))) return;
-      await API.del('/api/ads/' + del.dataset.deleteAd);
-      toast('Объявление снято');
-      navigate('/my');
+      if (!(await confirmDialog('Снять объявление?', 'Объявление перестанет показываться в поиске, но останется в архиве «Моих объявлений» — его можно вернуть.'))) return;
+      try {
+        await API.del('/api/ads/' + del.dataset.deleteAd);
+        toast('Объявление снято');
+        navigate('/my');
+      } catch (e) { toast(e.message, 'err'); }
     };
 
     const phoneBtn = $('[data-show-phone]');
@@ -624,6 +626,23 @@
         fav.classList.toggle('on', r.favorite);
         toast(r.favorite ? 'Добавлено в избранное' : 'Удалено из избранного');
       } catch (err) { toast(err.message, 'err'); }
+    }
+
+    const restore = e.target.closest('[data-restore-ad]');
+    if (restore) {
+      e.preventDefault();
+      const id = restore.dataset.restoreAd;
+      const btn = restore;
+      btn.disabled = true;
+      try {
+        const r = await API.patch('/api/ads/' + id, { status: 'active' });
+        toast(r && r.ad && r.ad.status === 'active' ? 'Объявление снова в публикации' : 'Готово');
+        render(true);
+      } catch (err) {
+        btn.disabled = false;
+        toast(err.message, 'err', err.status === 507 ? 12000 : 4000);
+      }
+      return;
     }
 
     const st = e.target.closest('[data-deal-status]');

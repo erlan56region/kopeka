@@ -259,7 +259,7 @@ const repo = {
     const offset = Number(params.offset || 0);
     const sid = getSession();
     let list = d.ads.filter(a => a.status !== 'deleted');
-    if (onlyMine) list = list.filter(a => a.ownerId === sid);
+    if (onlyMine) list = d.ads.filter(a => a.ownerId === sid); // автор видит и архив
     else list = list.filter(a => a.status === 'active');
     if (category) list = list.filter(a => a.category === category);
     if (city) list = list.filter(a => a.city.toLowerCase() === city.toLowerCase());
@@ -285,7 +285,13 @@ const repo = {
 
   getAd(d, id) {
     const ad = d.ads.find(x => x.id === id);
-    if (!ad || ad.status === 'deleted') { const e = new Error('Объявление не найдено'); e.status = 404; throw e; }
+    const sid = getSession();
+    const mine = ad && ad.ownerId === sid;
+    // своё объявление автор видит в любом статусе (иначе снятое нельзя вернуть),
+    // а посторонним снятое и проданное объявление не показываем по прямой ссылке
+    if (!ad || (ad.status !== 'active' && !mine)) {
+      const e = new Error('Объявление не найдено'); e.status = 404; throw e;
+    }
     ad.views = (ad.views || 0) + 1;
     const similar = d.ads.filter(x => x.id !== ad.id && x.status === 'active' && x.category === ad.category)
       .sort((x, y) => Math.abs(x.price - ad.price) - Math.abs(y.price - ad.price)).slice(0, 4)
@@ -330,7 +336,10 @@ const repo = {
     if (body.city != null) ad.city = String(body.city).slice(0, 80);
     if (body.metro != null) ad.metro = String(body.metro).slice(0, 80);
     if (body.condition != null) ad.condition = String(body.condition).slice(0, 40);
-    if (body.status === 'archived' || body.status === 'active') ad.status = body.status;
+    if (body.status === 'archived' || body.status === 'active') {
+      if (ad.status === 'sold' && body.status === 'active') { const e = new Error('Объявление уже продано — создайте новое'); e.status = 409; throw e; }
+      ad.status = body.status;
+    }
     if (Array.isArray(body.photos)) ad.photos = body.photos.slice(0, 8);
     if (body.deals) ad.deals = { meeting: !!body.deals.meeting, delivery: !!body.deals.delivery, transfer: !!body.deals.transfer };
     ad.updatedAt = Date.now();
@@ -342,8 +351,9 @@ const repo = {
     const ad = d.ads.find(x => x.id === id);
     if (!ad) { const e = new Error('Объявление не найдено'); e.status = 404; throw e; }
     if (ad.ownerId !== sid) { const e = new Error('Это не ваше объявление'); e.status = 403; throw e; }
-    ad.status = 'deleted'; ad.updatedAt = Date.now();
-    return { ok: true };
+    // снятие = архив: объявление уходит из поиска, но остаётся у автора
+    ad.status = 'archived'; ad.updatedAt = Date.now();
+    return { ok: true, status: 'archived' };
   },
 
   toggleFavorite(d, adId) {

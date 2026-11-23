@@ -290,7 +290,12 @@ async function api(req, res, pathname, query) {
 
     if (a1 && !a2 && method === 'GET') {
       const ad = db().ads.find(x => x.id === a1);
-      if (!ad || ad.status === 'deleted') return json(res, 404, { error: 'Объявление не найдено' });
+      // своё снятое объявление автор должен видеть — иначе его нельзя вернуть в публикацию
+      const mine = ad && user && ad.ownerId === user.id;
+      // автор видит своё объявление в любом статусе, остальным снятое/проданное не отдаём
+      if (!ad || (ad.status !== 'active' && !mine)) {
+        return json(res, 404, { error: 'Объявление не найдено' });
+      }
       ad.views = (ad.views || 0) + 1;
       if (!user || user.id !== ad.ownerId) save();
       const d = db();
@@ -315,7 +320,13 @@ async function api(req, res, pathname, query) {
       if (b.city != null) ad.city = String(b.city).slice(0, 80);
       if (b.metro != null) ad.metro = String(b.metro).slice(0, 80);
       if (b.condition != null) ad.condition = String(b.condition).slice(0, 40);
-      if (b.status === 'archived' || b.status === 'active') ad.status = b.status;
+      if (b.status === 'archived' || b.status === 'active') {
+        // вернуть в публикацию можно и снятое объявление; проданное — только через новую публикацию
+        if (ad.status === 'sold' && b.status === 'active') {
+          return json(res, 409, { error: 'Объявление уже продано — создайте новое' });
+        }
+        ad.status = b.status;
+      }
       if (Array.isArray(b.photos)) {
         ad.photos = b.photos.slice(0, 8).flatMap((raw) => {
           const paths = S.existingPhotoPaths(raw);
@@ -335,10 +346,12 @@ async function api(req, res, pathname, query) {
       const ad = db().ads.find(x => x.id === a1);
       if (!ad) return json(res, 404, { error: 'Объявление не найдено' });
       if (ad.ownerId !== user.id) return json(res, 403, { error: 'Это не ваше объявление' });
-      ad.status = 'deleted';
+      // «снять с публикации» — это архив: объявление уходит из поиска, но остаётся у автора
+      // и возвращается в публикацию одной кнопкой
+      ad.status = 'archived';
       ad.updatedAt = Date.now();
       save();
-      return json(res, 200, { ok: true });
+      return json(res, 200, { ok: true, status: 'archived' });
     }
 
     if (a1 && a2 === 'favorite' && method === 'POST') {

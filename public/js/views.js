@@ -197,9 +197,13 @@
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
               ${isMine ? `
-                <a class="btn btn-primary" href="/edit/${esc(ad.id)}" data-link>Редактировать</a>
+                ${ad.status === 'active' ? `<a class="btn btn-primary" href="/edit/${esc(ad.id)}" data-link>Редактировать</a>` : ''}
                 <a class="btn" href="/chats" data-link>Сообщения по объявлению</a>
-                <button class="btn btn-danger" data-delete-ad="${esc(ad.id)}">${icons.trash} Снять с публикации</button>
+                ${ad.status === 'active'
+                  ? `<button class="btn btn-danger" data-delete-ad="${esc(ad.id)}">${icons.trash} Снять с публикации</button>`
+                  : ad.status === 'archived'
+                    ? `<button class="btn btn-primary" data-restore-ad="${esc(ad.id)}">${icons.check} Вернуть в публикацию</button>`
+                    : ''}
               ` : `
                 <button class="btn btn-primary" data-start-chat="${esc(ad.id)}">${icons.chat} Написать продавцу</button>
                 <button class="btn" data-fav="${esc(ad.id)}">${icons.heart} ${ad.favorite ? 'В избранном' : 'В избранное'}</button>
@@ -475,13 +479,25 @@
   function myAds(state) {
     if (!state.me) return loginRequired('Войдите, чтобы управлять объявлениями.');
     const items = state.myAds || [];
+    // снятые объявления не теряются: лежат в архиве и возвращаются в публикацию одной кнопкой
+    const active = items.filter(a => a.status === 'active');
+    const archived = items.filter(a => a.status !== 'active');
+    const card = (a) => `
+      <div class="my-ad">
+        ${adCard(a, { showFav: false })}
+        ${a.status === 'archived' ? `<div class="my-ad-actions"><button class="btn btn-sm btn-primary" data-restore-ad="${esc(a.id)}">Вернуть в публикацию</button></div>` : ''}
+      </div>`;
     return `
     <div class="container">
       <div class="page-head">
-        <div><div class="page-title">Мои объявления</div><div class="muted small">${items.length} всего</div></div>
+        <div><div class="page-title">Мои объявления</div><div class="muted small">${active.length} в публикации${archived.length ? ' · ' + archived.length + ' в архиве' : ''}</div></div>
         <a class="btn btn-primary" href="/new" data-link>+ Новое</a>
       </div>
-      ${items.length ? `<div class="grid">${items.map(a => adCard(a, { showFav: false })).join('')}</div>` : `<div class="empty">Вы ещё ничего не размещали. <a href="/new" data-link style="color:var(--primary)">Разместить объявление</a></div>`}
+      ${active.length ? `<div class="grid">${active.map(card).join('')}</div>` : `<div class="empty">Вы ещё ничего не размещали. <a href="/new" data-link style="color:var(--primary)">Разместить объявление</a></div>`}
+      ${archived.length ? `
+        <h2 style="margin:30px 0 12px;font-size:18px">Архив</h2>
+        <p class="muted small" style="margin-bottom:12px">Снятые и проданные объявления. В публикацию можно вернуть одним нажатием.</p>
+        <div class="grid">${archived.map(card).join('')}</div>` : ''}
     </div>`;
   }
 
