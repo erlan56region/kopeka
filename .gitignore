@@ -5,5 +5,4 @@ data/uploads/
 *.log
 .DS_Store
 
-# собранная статика (пересобирается скриптом build_pages.py в CI)
-pages/
+# собранная статика дублируется в корне для GitHub Pages («deploy from branch: main /»)

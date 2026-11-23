@@ -374,6 +374,14 @@ const repo = {
   },
 };
 
+// Фото должны быть абсолютными: адрес страницы меняется (pushState), а <img src="seed/...">
+// после этого резолвится не туда. Подставляем базу публикации.
+function photoUrl(p) {
+  if (typeof p !== 'string' || !p) return p;
+  if (/^(data:|https?:|\/\/|\/)/.test(p)) return p;
+  return (window.__BASE_PATH__ || '') + '/' + p.replace(/^\.?\//, '');
+}
+
 function publicUser(u) {
   if (!u) return null;
   return { id: u.id, name: u.name, phone: u.phone, city: u.city, about: u.about, avatar: u.avatar,
@@ -384,7 +392,7 @@ function adView(d, ad) {
   const sid = getSession();
   const owner = d.users.find(u => u.id === ad.ownerId);
   return { id: ad.id, title: ad.title, description: ad.description, price: ad.price, category: ad.category,
-    condition: ad.condition, city: ad.city, metro: ad.metro, photos: ad.photos || [], deals: ad.deals,
+    condition: ad.condition, city: ad.city, metro: ad.metro, photos: (ad.photos || []).map(photoUrl), deals: ad.deals,
     status: ad.status, views: ad.views || 0, createdAt: ad.createdAt, updatedAt: ad.updatedAt,
     ownerId: ad.ownerId, isMine: !!sid && sid === ad.ownerId,
     favorite: !!sid && d.favorites.some(f => f.userId === sid && f.adId === ad.id), owner: publicUser(owner) };
@@ -397,7 +405,7 @@ function chatView(d, chat, sid) {
   const last = msgs[msgs.length - 1] || null;
   const unread = msgs.filter(m => m.fromId !== sid && !(m.readBy || []).includes(sid)).length;
   return { id: chat.id, adId: chat.adId,
-    ad: ad ? { id: ad.id, title: ad.title, price: ad.price, photos: (ad.photos || []).slice(0, 1), status: ad.status } : null,
+    ad: ad ? { id: ad.id, title: ad.title, price: ad.price, photos: (ad.photos || []).slice(0, 1).map(photoUrl), status: ad.status } : null,
     peer: publicUser(peer), role: chat.sellerId === sid ? 'seller' : 'buyer',
     lastMessage: last ? { text: last.text, kind: last.kind, createdAt: last.createdAt, mine: last.fromId === sid } : null,
     unread, updatedAt: last ? last.createdAt : chat.createdAt };
@@ -406,7 +414,7 @@ function dealView(d, deal, sid) {
   const ad = d.ads.find(a => a.id === deal.adId);
   const other = deal.fromId === sid ? deal.toId : deal.fromId;
   return { id: deal.id, adId: deal.adId,
-    ad: ad ? { id: ad.id, title: ad.title, price: ad.price, photos: (ad.photos || []).slice(0, 1) } : null,
+    ad: ad ? { id: ad.id, title: ad.title, price: ad.price, photos: (ad.photos || []).slice(0, 1).map(photoUrl) } : null,
     chatId: deal.chatId, type: deal.type, typeLabel: DEAL_TYPES[deal.type] || deal.type,
     place: deal.place, when: deal.when, price: deal.price, comment: deal.comment,
     status: deal.status, statusLabel: DEAL_STATUS[deal.status] || deal.status,
@@ -622,13 +630,25 @@ window.__KOPEIKINO_DEMO__ = {demo};
 
     OUT_DIR.mkdir(exist_ok=True)
     # фото демо-объявлений рядом со страницей
-    seed_dir = OUT_DIR / 'seed'
+    seed_dir = ROOT / 'seed'          # рядом с корневым index.html (Pages: main /)
+    seed_dir.mkdir(exist_ok=True)
     seed_dir.mkdir(exist_ok=True)
     for img in (ROOT / 'public' / 'seed').glob('*.jpg'):
         (seed_dir / img.name).write_bytes(img.read_bytes())
 
+    # копия для артефакта workflow (pages/)
+    art_seed = OUT_DIR / 'seed'
+    art_seed.mkdir(exist_ok=True)
+    for img in (ROOT / 'public' / 'seed').glob('*.jpg'):
+        (art_seed / img.name).write_bytes(img.read_bytes())
+
     OUT.write_text(body, encoding='utf-8')
     (OUT_DIR / '.nojekyll').write_text('', encoding='utf-8')
+
+    # GitHub Pages настроен как «deploy from branch: main /», поэтому тот же файл
+    # нужен в корне репозитория: именно его отдаёт https://<user>.github.io/<repo>/
+    (ROOT / 'index.html').write_text(body, encoding='utf-8')
+    (ROOT / '.nojekyll').write_text('', encoding='utf-8')
 
     # 404.html: при клиентской навигации не нужен, но спасает прямые ссылки вида /ad/xxx
     depth = body.count('/')
