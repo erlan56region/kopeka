@@ -537,7 +537,8 @@ BASE_SCRIPT = '''<script>
     var b = window.__BASE_PATH__;
     if (!b) return;
     document.querySelectorAll('a[href^="/"]').forEach(function (a) {
-      if (a.hasAttribute('data-link')) return; // навигацию таких ссылок ведёт роутер приложения
+      // префикс ставим всем ссылкам (важно для Ctrl+клика и «открыть в новой вкладке»),
+      // а при обычном клике роутер снимает его сам — двойного префикса не будет
       var href = a.getAttribute('href');
       if (href.indexOf('//') === 0) return;
       if (href.indexOf(b + '/') === 0) return;
