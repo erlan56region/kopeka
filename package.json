@@ -1,0 +1,16 @@
+{
+  "name": "kopeikino-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Копейкино — маркетплейс с объявлениями, чатом и сделками (встреча/перевозка). Node.js, без внешних зависимостей.",
+  "type": "commonjs",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "build:pages": "python3 build_pages.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
