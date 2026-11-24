@@ -26,6 +26,13 @@
     return p || '/';
   }
   function toHref(path) { return BASE + (path === '/' ? '/' : path); }
+
+  // Заголовок вкладки: SPA не перезагружает страницу, поэтому document.title
+  // нужно обновлять самим — иначе во всех вкладках висит название главной.
+  const SITE = 'Копейкино';
+  function setTitle(title) {
+    document.title = title ? `${title} — ${SITE}` : `${SITE} — доска объявлений: купить, продать, договориться`;
+  }
   // href мог уже получить префикс базы (серверная разметка или script в Pages-сборке)
   function stripBase(href) {
     if (!BASE) return href;
@@ -187,11 +194,13 @@
       if (path === '/my') return await renderMyAds();
       if (path.startsWith('/user/')) return await renderProfile(path.split('/')[2]);
 
+      setTitle('Страница не найдена');
       app.innerHTML = Views.notFound();
     } catch (e) {
       // 404 по адресу (снятое объявление, чужой чат) — это не поломка приложения:
       // показываем понятный экран с переходом на главную, а не «Ошибка: …»
       if (e && (e.status === 404 || /не найдено|не найден/i.test(e.message || ''))) {
+        setTitle('Не найдено');
         app.innerHTML = Views.notFound(e.message);
         return;
       }
@@ -204,6 +213,7 @@
 
   /* ---- главная ---- */
   async function renderHome(params) {
+    setTitle('');
     state.filters = {
       q: params.get('q') || '',
       category: params.get('category') || '',
@@ -255,6 +265,7 @@
   /* ---- объявление ---- */
   async function renderAd(adId) {
     const r = await API.get('/api/ads/' + encodeURIComponent(adId));
+    setTitle(r.ad.price ? `${r.ad.title} — ${price(r.ad.price)}` : r.ad.title);
     app.innerHTML = Views.adPage({ ad: r.ad, similar: r.similar, me: state.me });
     bindFavButtons();
 
@@ -296,6 +307,7 @@
 
   /* ---- форма ---- */
   async function renderForm(adId) {
+    setTitle(adId ? 'Редактирование объявления' : 'Разместить объявление');
     if (!state.me) {
       app.innerHTML = Views.loginRequired('Размещать объявления могут только зарегистрированные пользователи.');
       return;
@@ -402,6 +414,7 @@
 
   /* ---- чаты ---- */
   async function renderChats(chatId) {
+    setTitle('Сообщения');
     if (!state.me) { app.innerHTML = Views.loginRequired('Чтобы переписываться с продавцами, войдите в аккаунт.'); return; }
     const list = await API.get('/api/chats');
     let chat = null;
@@ -502,6 +515,7 @@
 
   /* ---- сделки ---- */
   async function renderDeals() {
+    setTitle('Сделки');
     if (!state.me) { app.innerHTML = Views.loginRequired('Войдите, чтобы видеть свои сделки.'); return; }
     const r = await API.get('/api/deals');
     app.innerHTML = Views.deals({ me: state.me, deals: r.items });
@@ -509,6 +523,7 @@
 
   /* ---- избранное ---- */
   async function renderFavorites() {
+    setTitle('Избранное');
     if (!state.me) { app.innerHTML = Views.loginRequired('Войдите, чтобы сохранять объявления в избранное.'); return; }
     const r = await API.get('/api/favorites');
     app.innerHTML = Views.favorites({ me: state.me, favorites: r.items });
@@ -517,7 +532,9 @@
 
   /* ---- профиль ---- */
   async function renderProfile(userId) {
+    setTitle('Профиль');
     const r = await API.get('/api/users/' + encodeURIComponent(userId));
+    setTitle(r.user && r.user.name ? r.user.name : 'Профиль');
     app.innerHTML = Views.profile({ me: state.me, profile: r.user, userAds: r.ads, reviewsList: r.reviewsList });
     bindFavButtons();
     const rev = $('[data-review]');
@@ -551,6 +568,7 @@
   }
 
   async function renderSettings() {
+    setTitle('Настройки профиля');
     if (!state.me) { app.innerHTML = Views.loginRequired('Войдите, чтобы изменить профиль.'); return; }
     app.innerHTML = Views.settings({ me: state.me });
     $('#profile-form').onsubmit = async (e) => {
@@ -566,6 +584,7 @@
   }
 
   async function renderMyAds() {
+    setTitle('Мои объявления');
     if (!state.me) { app.innerHTML = Views.loginRequired('Войдите, чтобы видеть свои объявления.'); return; }
     const r = await API.get('/api/ads', { owner: 'me', limit: 60 });
     app.innerHTML = Views.myAds({ me: state.me, myAds: r.items });
@@ -573,6 +592,7 @@
 
   /* ---- вход ---- */
   function renderAuth() {
+    setTitle('Вход и регистрация');
     app.innerHTML = Views.auth({ meta: state.meta });
     $('#login-form').onsubmit = async (e) => {
       e.preventDefault();
