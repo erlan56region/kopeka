@@ -18,18 +18,43 @@
   var base = seg.length ? '/' + seg[0] : '';
   if (base === '/' || base === '/index.html') base = '';
   window.__BASE_PATH__ = base;
-  document.addEventListener('DOMContentLoaded', function () {
+
+  // Префикс нужен всем ссылкам на странице: карточки объявлений, кнопки шапки и меню
+  // рисуются уже ПОСЛЕ DOMContentLoaded, поэтому одного прохода по документу мало —
+  // Ctrl+клик и «открыть в новой вкладке» уходили на несуществующий /ad/<id> без /kopeka/.
+  function prefixHref(a) {
     var b = window.__BASE_PATH__;
     if (!b) return;
-    document.querySelectorAll('a[href^="/"]').forEach(function (a) {
-      // префикс ставим всем ссылкам (важно для Ctrl+клика и «открыть в новой вкладке»),
-      // а при обычном клике роутер снимает его сам — двойного префикса не будет
-      var href = a.getAttribute('href');
-      if (href.indexOf('//') === 0) return;
-      if (href.indexOf(b + '/') === 0) return;
-      a.setAttribute('href', b + href);
-    });
-  });
+    var href = a.getAttribute('href');
+    if (!href || href.charAt(0) !== '/') return;
+    if (href.indexOf('//') === 0) return;
+    if (href === b || href.indexOf(b + '/') === 0) return;
+    a.setAttribute('href', b + href);
+  }
+  function prefixAll(root) {
+    if (!window.__BASE_PATH__) return;
+    var scope = root && root.querySelectorAll ? root : document;
+    if (scope.matches && scope.matches('a[href^="/"]')) prefixHref(scope);
+    scope.querySelectorAll('a[href^="/"]').forEach(prefixHref);
+  }
+  // Префикс ставим и обычному клику роутер снимет его сам — двойного префикса не будет.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { prefixAll(document); });
+  } else {
+    prefixAll(document);
+  }
+  // Приложение перерисовывает контент (поиск, фильтры, чат) — следим за новыми ссылками.
+  // Наблюдатель безвреден: уже обработанные ссылки повторно не меняются.
+  if (window.MutationObserver) {
+    new MutationObserver(function (records) {
+      for (var i = 0; i < records.length; i++) {
+        var added = records[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          if (added[j].nodeType === 1) prefixAll(added[j]);
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
 })();
 </script></head>
 <body>
